@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { BaziResult } from "@/lib/bazi-types";
 import { Card } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
@@ -17,6 +20,7 @@ function PillarCard({
   hiddenStems,
   tenGod,
   highlight = false,
+  delayMs = 0,
 }: {
   label: string;
   stem: string;
@@ -24,14 +28,16 @@ function PillarCard({
   hiddenStems: string[];
   tenGod: string;
   highlight?: boolean;
+  delayMs?: number;
 }) {
   return (
     <div
-      className={`rounded-xl2 border p-4 text-center ${
+      className={`animate-card-pop rounded-xl2 border p-4 text-center opacity-0 ${
         highlight
           ? "border-burgundy bg-burgundy/5"
           : "border-line bg-bg-surface/60"
       }`}
+      style={{ animationDelay: `${delayMs}ms` }}
     >
       <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink-faint">
         {label}
@@ -63,6 +69,14 @@ export function BaziChart({
     fiveElements.metal +
     fiveElements.water || 1;
 
+  // Bars start at 0 and grow to their real width just after mount, so the
+  // balance visibly "fills in" instead of appearing fully drawn.
+  const [barsGrown, setBarsGrown] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setBarsGrown(true), 500);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <div className="text-center">
@@ -84,6 +98,7 @@ export function BaziChart({
           branch={pillars.hour.branch}
           hiddenStems={pillars.hour.hiddenStems}
           tenGod={pillars.hour.tenGodStem}
+          delayMs={0}
         />
         <PillarCard
           label="Day"
@@ -92,6 +107,7 @@ export function BaziChart({
           hiddenStems={pillars.day.hiddenStems}
           tenGod={pillars.day.tenGodStem}
           highlight
+          delayMs={150}
         />
         <PillarCard
           label="Month"
@@ -99,6 +115,7 @@ export function BaziChart({
           branch={pillars.month.branch}
           hiddenStems={pillars.month.hiddenStems}
           tenGod={pillars.month.tenGodStem}
+          delayMs={300}
         />
         <PillarCard
           label="Year"
@@ -106,6 +123,7 @@ export function BaziChart({
           branch={pillars.year.branch}
           hiddenStems={pillars.year.hiddenStems}
           tenGod={pillars.year.tenGodStem}
+          delayMs={450}
         />
       </div>
 
@@ -127,9 +145,11 @@ export function BaziChart({
               <span className="w-14 text-xs text-ink-muted">{label}</span>
               <div className="h-2 flex-1 overflow-hidden rounded-full bg-line">
                 <div
-                  className={`h-full rounded-full ${ELEMENT_COLOR[key]}`}
+                  className={`h-full rounded-full transition-all duration-1000 ease-out ${ELEMENT_COLOR[key]}`}
                   style={{
-                    width: `${(fiveElements[key] / total) * 100}%`,
+                    width: barsGrown
+                      ? `${(fiveElements[key] / total) * 100}%`
+                      : "0%",
                   }}
                 />
               </div>
@@ -150,7 +170,8 @@ export function BaziChart({
             {luckPillars.map((p, i) => (
               <div
                 key={i}
-                className="min-w-[100px] rounded-xl2 border border-line bg-bg-surface/60 p-3 text-center"
+                className="min-w-[100px] animate-card-pop rounded-xl2 border border-line bg-bg-surface/60 p-3 text-center opacity-0"
+                style={{ animationDelay: `${600 + i * 80}ms` }}
               >
                 <p className="font-mono text-[10px] text-ink-faint">
                   Age {p.startAge}

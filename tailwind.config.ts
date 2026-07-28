@@ -59,6 +59,10 @@ const config: Config = {
           "0%, 100%": { transform: "translateY(0) scale(1)" },
           "50%": { transform: "translateY(-16px) scale(1.04)" },
         },
+        "card-pop": {
+          "0%": { opacity: "0", transform: "translateY(14px) scale(0.92)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
         "shimmer": {
           "0%": { backgroundPosition: "-150% 0" },
           "100%": { backgroundPosition: "250% 0" },
@@ -86,7 +90,8 @@ const config: Config = {
         "fade-up": "fade-up 0.9s cubic-bezier(0.22,1,0.36,1) both",
         "shape-in": "shape-in 1.1s cubic-bezier(0.22,1,0.36,1) both",
         "float": "float 7s ease-in-out infinite",
-       "shimmer": "shimmer 18s ease-in-out infinite",
+        "card-pop": "card-pop 0.6s cubic-bezier(0.22,1,0.36,1) both",
+        "shimmer": "shimmer 18s ease-in-out infinite",
         "wave-drift": "wave-drift 18s linear infinite",
         "blob-morph": "blob-morph 12s ease-in-out infinite",
       },

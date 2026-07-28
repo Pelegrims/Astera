@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { calculateBazi } from "@/lib/bazi";
 import { BaziInput, BaziResult } from "@/lib/bazi-types";
 import { Button } from "@/components/ui/Button";
@@ -24,13 +24,23 @@ export function BaziCalculator() {
   const [utcOffset, setUtcOffset] = useState("-5");
   const [result, setResult] = useState<BaziResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  // Scroll the result into view the moment it appears — without this, a
+  // result rendered below the fold can look like nothing happened at all.
+  useEffect(() => {
+    if (result && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [result]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
     const input: BaziInput = {
-      name: name || "Your",
+      name: name.trim() || "Your",
       gender,
       year: Number(year),
       month: Number(month),
@@ -45,16 +55,26 @@ export function BaziCalculator() {
       return;
     }
 
-    try {
-      const computed = calculateBazi(input);
-      setResult(computed);
-    } catch (err) {
-      setError(
-        "Couldn't calculate your chart — please double-check the date and try again."
-      );
-      // eslint-disable-next-line no-console
-      console.error(err);
-    }
+    setIsCalculating(true);
+    setResult(null);
+
+    // A brief, deliberate pause — the calculation itself is instant, but a
+    // beat of "Calculating..." makes it clear the button press registered,
+    // rather than the result just silently appearing (or not appearing).
+    setTimeout(() => {
+      try {
+        const computed = calculateBazi(input);
+        setResult(computed);
+      } catch (err) {
+        setError(
+          "Couldn't calculate your chart — please double-check the date and try again."
+        );
+        // eslint-disable-next-line no-console
+        console.error(err);
+      } finally {
+        setIsCalculating(false);
+      }
+    }, 500);
   }
 
   return (
@@ -206,13 +226,17 @@ export function BaziCalculator() {
 
           {error && <p className="text-sm text-burgundy">{error}</p>}
 
-          <Button type="submit" className="w-full">
-            Calculate my chart
+          <Button type="submit" className="w-full" disabled={isCalculating}>
+            {isCalculating ? "Calculating…" : "Calculate my chart"}
           </Button>
         </form>
       </Card>
 
-      {result && <BaziChart result={result} name={name || "Your"} />}
+      {result && (
+        <div ref={resultRef} className="animate-fade-up scroll-mt-8">
+          <BaziChart result={result} name={name.trim() || "Your"} />
+        </div>
+      )}
     </div>
   );
 }
