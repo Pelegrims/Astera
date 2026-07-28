@@ -86,7 +86,7 @@ const config: Config = {
         "fade-up": "fade-up 0.9s cubic-bezier(0.22,1,0.36,1) both",
         "shape-in": "shape-in 1.1s cubic-bezier(0.22,1,0.36,1) both",
         "float": "float 7s ease-in-out infinite",
-        "shimmer": "shimmer 4.5s ease-in-out infinite",
+        "shimmer": "shimmer 7s ease-in-out infinite",
         "wave-drift": "wave-drift 18s linear infinite",
         "blob-morph": "blob-morph 12s ease-in-out infinite",
       },

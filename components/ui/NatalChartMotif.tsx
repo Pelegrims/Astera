@@ -8,10 +8,10 @@ export function NatalChartMotif({
   const isDark = variant === "dark";
   const ringStroke = isDark ? "rgba(242,239,234,0.16)" : "rgba(43,34,48,0.12)";
   const tickStroke = isDark ? "rgba(242,239,234,0.20)" : "rgba(43,34,48,0.14)";
-  const lineA = isDark ? "#6BB8B8" : "#5C609F";
+  const lineA = isDark ? "#6BB0B0" : "#5C609F";
   const lineB = isDark ? "#8A9096" : "#3D1B2E";
-  const dot = isDark ? "#FFFFFF" : "#3D1B2E";
-  const gradA = isDark ? "#6BB8B8" : "#C9BFDD";
+  const dot = isDark ? "#C9D0D3" : "#3D1B2E";
+  const gradA = isDark ? "#6BB0B0" : "#C9BFDD";
   const gradB = isDark ? "#8A9096" : "#5C609F";
 
   return (

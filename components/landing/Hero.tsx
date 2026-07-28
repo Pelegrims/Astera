@@ -6,7 +6,7 @@ import { NatalChartMotif } from "@/components/ui/NatalChartMotif";
 // astrologer's system (self-expression, creativity), applied directly to
 // text via bg-clip-text, with the same shimmer sweep used on buttons.
 const metallicText =
-  "bg-clip-text text-transparent bg-[length:250%_100%] animate-shimmer bg-[linear-gradient(100deg,#2a2f35_0%,#4a9a9a_12%,#1a1f24_24%,#e8e8e8_34%,#ffffff_42%,#8a9096_52%,#2a2f35_64%,#6bb8b8_76%,#e8e8e8_88%,#2a2f35_100%)]";
+  "bg-clip-text text-transparent bg-[length:250%_100%] animate-shimmer bg-[linear-gradient(100deg,#4a5257_0%,#6bb0b0_18%,#5a6469_36%,#c9d0d3_50%,#6bb0b0_64%,#5a6469_82%,#4a5257_100%)]";
 
 export function Hero() {
   return (
