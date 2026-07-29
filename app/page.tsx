@@ -1,6 +1,8 @@
 import { Hero } from "@/components/landing/Hero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
-import { TrustStrip } from "@/components/landing/TrustStrip";
+import { SampleReport } from "@/components/landing/SampleReport";
+import { StatsBand } from "@/components/landing/StatsBand";
+import { Faq } from "@/components/landing/Faq";
 import { FinalCta } from "@/components/landing/FinalCta";
 import { Footer } from "@/components/landing/Footer";
 import { Reveal } from "@/components/ui/Reveal";
@@ -10,10 +12,16 @@ export default function LandingPage() {
     <main>
       <Hero />
       <Reveal>
-        <TrustStrip />
+        <HowItWorks />
       </Reveal>
       <Reveal>
-        <HowItWorks />
+        <SampleReport />
+      </Reveal>
+      <Reveal>
+        <StatsBand />
+      </Reveal>
+      <Reveal>
+        <Faq />
       </Reveal>
       <Reveal>
         <FinalCta />
