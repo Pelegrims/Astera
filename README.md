@@ -147,3 +147,48 @@ modeled on does this automatically, including historical DST/Soviet-era
 clock changes) — that's a meaningfully more complex feature to get right
 and verify, left for a second pass once the core calculator is confirmed
 accurate.
+
+## Setting up Supabase (real, persistent storage)
+
+The app now reads/writes through Supabase instead of an in-memory array —
+this was the missing piece before testing with real users or ads, since
+in-memory data doesn't reliably survive across serverless invocations on
+Vercel.
+
+**One-time setup:**
+
+1. Go to [supabase.com](https://supabase.com), sign up (free tier is
+   enough for an MVP), and create a new project.
+2. In the Supabase dashboard, go to the **SQL Editor** and run:
+
+   ```sql
+   create table requests (
+     id text primary key,
+     "firstName" text not null,
+     email text not null,
+     phone text,
+     "birthDate" text not null,
+     "birthTime" text,
+     "birthLocation" text not null,
+     gender text not null,
+     "utcOffset" integer not null,
+     focus text not null,
+     consent boolean not null default false,
+     status text not null default 'new',
+     "createdAt" timestamptz not null default now(),
+     report jsonb not null default '{}'::jsonb
+   );
+   ```
+
+3. In the Supabase dashboard, go to **Project Settings → API** and copy:
+   - **Project URL** → this is `NEXT_PUBLIC_SUPABASE_URL`
+   - **service_role key** (not the `anon` key — this one bypasses row
+     security and must stay server-only) → this is `SUPABASE_SERVICE_ROLE_KEY`
+4. In Vercel, go to your project → **Settings → Environment Variables**,
+   and add both of those.
+5. Redeploy (Vercel → Deployments → Redeploy on the latest one) so the new
+   env vars take effect.
+
+`lib/mock-data.ts` is no longer used by the live app — it's kept only as a
+reference for the exact shape of a request record. The admin dashboard and
+Thank You page will now show real, persistent submissions.

@@ -2,8 +2,7 @@
 
 import { useMemo } from "react";
 import { calculateBazi } from "@/lib/bazi";
-import { ElementCards } from "@/components/bazi/ElementCards";
-import { Card } from "@/components/ui/Card";
+import { ElementSpotlight } from "@/components/bazi/ElementSpotlight";
 import { LinkButton } from "@/components/ui/Button";
 
 export function BaziFreePreview({
@@ -56,9 +55,9 @@ export function BaziFreePreview({
         </p>
       </div>
 
-      <Card className="mt-6 p-6">
-        <ElementCards fiveElements={result.fiveElements} delayBase={100} />
-      </Card>
+      <div className="mt-6">
+        <ElementSpotlight fiveElements={result.fiveElements} name={firstName} />
+      </div>
 
       <p className="mt-4 text-center text-xs text-ink-faint">
         Day Master: {result.dayMaster.stem} ({result.dayMaster.element})

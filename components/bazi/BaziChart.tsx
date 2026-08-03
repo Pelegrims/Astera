@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { BaziResult } from "@/lib/bazi-types";
 import { Card } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
-import { ElementCards } from "./ElementCards";
+import { ElementSpotlight } from "./ElementSpotlight";
 
 function PillarCard({
   label,
@@ -55,14 +54,6 @@ export function BaziChart({
   name: string;
 }) {
   const { pillars, dayMaster, fiveElements, luckPillars } = result;
-
-  // Bars start at 0 and grow to their real width just after mount, so the
-  // balance visibly "fills in" instead of appearing fully drawn.
-  const [barsGrown, setBarsGrown] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setBarsGrown(true), 500);
-    return () => clearTimeout(t);
-  }, []);
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -119,7 +110,7 @@ export function BaziChart({
           Five Element Balance
         </h2>
         <div className="mt-4">
-          <ElementCards fiveElements={fiveElements} grown={barsGrown} delayBase={100} />
+          <ElementSpotlight fiveElements={fiveElements} name={name} />
         </div>
       </Card>
 
