@@ -34,10 +34,19 @@ export async function submitQuiz(formData: FormData) {
     consent,
   });
 
-  // Redirect with the request id (not raw birth data) so the Thank You
-  // page can look up everything it needs server-side via the store,
-  // rather than passing personal data through the URL.
-  redirect(`/thank-you?id=${request.id}`);
+  // Passed directly in the URL rather than looked up server-side by id —
+  // the mock in-memory store isn't guaranteed to persist across separate
+  // serverless invocations on Vercel, so a lookup on the next page can
+  // silently come back empty. None of this is sensitive enough to avoid
+  // putting in a URL for the MVP.
+  const params = new URLSearchParams({
+    firstName: request.firstName,
+    birthDate: request.birthDate,
+    birthTime: request.birthTime ?? "",
+    gender: request.gender,
+    utcOffset: String(request.utcOffset),
+  });
+  redirect(`/thank-you?${params.toString()}`);
 }
 
 export async function saveReport(id: string, report: ReportSections) {

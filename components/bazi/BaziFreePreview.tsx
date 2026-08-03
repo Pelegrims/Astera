@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { calculateBazi } from "@/lib/bazi";
 import { ElementCards } from "@/components/bazi/ElementCards";
 import { Card } from "@/components/ui/Card";
+import { LinkButton } from "@/components/ui/Button";
 
 export function BaziFreePreview({
   firstName,
@@ -62,6 +63,26 @@ export function BaziFreePreview({
       <p className="mt-4 text-center text-xs text-ink-faint">
         Day Master: {result.dayMaster.stem} ({result.dayMaster.element})
       </p>
+
+      <div className="mt-8 rounded-xl2 border border-line bg-bg-surface/50 p-8 text-center">
+        <h3 className="font-display text-lg text-aubergine">
+          Want the deeper analysis?
+        </h3>
+        <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-muted">
+          Your Extended Reading adds your 10-year luck cycles, a full
+          written interpretation of what this balance means for you, and
+          how it lines up with your Western chart.
+        </p>
+        <p className="mt-4">
+          <span className="text-sm text-ink-faint line-through">$39.99</span>{" "}
+          <span className="font-display text-2xl text-burgundy">$29.99</span>
+        </p>
+        <div className="mt-5 flex justify-center">
+          <LinkButton href="mailto:hello@astera.app?subject=Extended%20Reading%20request">
+            Get my extended reading
+          </LinkButton>
+        </div>
+      </div>
     </div>
   );
 }

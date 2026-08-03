@@ -1,22 +1,25 @@
-import { getRequestById } from "@/lib/store";
 import { Container } from "@/components/ui/Container";
 import { OrbitDivider } from "@/components/ui/OrbitDivider";
 import { LinkButton } from "@/components/ui/Button";
 import { BaziFreePreview } from "@/components/bazi/BaziFreePreview";
 
-export const dynamic = "force-dynamic";
-
-export default async function ThankYouPage({
+export default function ThankYouPage({
   searchParams,
 }: {
-  searchParams: { id?: string; name?: string };
+  searchParams: {
+    name?: string;
+    firstName?: string;
+    birthDate?: string;
+    birthTime?: string;
+    gender?: string;
+    utcOffset?: string;
+  };
 }) {
-  const request = searchParams.id
-    ? await getRequestById(searchParams.id)
-    : null;
-  // Falls back to the old ?name= param so any already-shared/bookmarked
-  // links from before this change still show a sensible thank-you page.
-  const name = request?.firstName ?? searchParams.name;
+  // Support both the new params and the old ?name= link, so anything
+  // already shared/bookmarked before this change still shows a sensible page.
+  const name = searchParams.firstName ?? searchParams.name;
+  const hasBaziData =
+    searchParams.firstName && searchParams.birthDate && searchParams.gender;
 
   return (
     <main className="min-h-screen bg-aurora py-20">
@@ -43,14 +46,14 @@ export default async function ThankYouPage({
         </div>
       </Container>
 
-      {request && (
+      {hasBaziData && (
         <Container width="lg">
           <BaziFreePreview
-            firstName={request.firstName}
-            birthDate={request.birthDate}
-            birthTime={request.birthTime}
-            gender={request.gender}
-            utcOffset={request.utcOffset}
+            firstName={searchParams.firstName!}
+            birthDate={searchParams.birthDate!}
+            birthTime={searchParams.birthTime || undefined}
+            gender={searchParams.gender as "male" | "female"}
+            utcOffset={Number(searchParams.utcOffset ?? -5)}
           />
         </Container>
       )}
