@@ -63,6 +63,10 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateY(14px) scale(0.92)" },
           "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
         },
+        "spin-slow": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
         "shimmer": {
           "0%": { backgroundPosition: "-150% 0" },
           "100%": { backgroundPosition: "250% 0" },
@@ -91,6 +95,7 @@ const config: Config = {
         "shape-in": "shape-in 1.1s cubic-bezier(0.22,1,0.36,1) both",
         "float": "float 7s ease-in-out infinite",
         "card-pop": "card-pop 0.6s cubic-bezier(0.22,1,0.36,1) both",
+        "spin-slow": "spin-slow 70s linear infinite",
         "shimmer": "shimmer 18s ease-in-out infinite",
         "wave-drift": "wave-drift 18s linear infinite",
         "blob-morph": "blob-morph 12s ease-in-out infinite",

@@ -32,6 +32,8 @@ interface FormValues {
   birthTimeKnown: boolean;
   birthTime: string;
   birthLocation: string;
+  gender: "male" | "female";
+  utcOffset: string;
   focus: FocusArea | "";
   consent: boolean;
 }
@@ -44,9 +46,13 @@ const initialValues: FormValues = {
   birthTimeKnown: true,
   birthTime: "",
   birthLocation: "",
+  gender: "female",
+  utcOffset: "-5",
   focus: "",
   consent: false,
 };
+
+const UTC_OFFSETS = Array.from({ length: 27 }, (_, i) => i - 12); // -12 to +14
 
 const focusOptions: { value: FocusArea; label: string; helper: string }[] = [
   { value: "love", label: FOCUS_LABELS.love, helper: "Patterns in how you connect and attach." },
@@ -67,7 +73,7 @@ export function QuizForm() {
   const steps: StepDef[] = [
     {
       key: "name",
-      eyebrow: "1 of 6 · Getting started",
+      eyebrow: "1 of 7 · Getting started",
       title: "What should we call you?",
       helper: "Your report is written to you, personally — not a template.",
       isValid: (d) => d.firstName.trim().length > 0,
@@ -84,7 +90,7 @@ export function QuizForm() {
     },
     {
       key: "contact",
-      eyebrow: "2 of 6 · Where to send it",
+      eyebrow: "2 of 7 · Where to send it",
       title: "Where should your report go?",
       helper: "We'll email a private link the moment it's ready. Phone is optional, only used if we need to reach you about your reading.",
       isValid: (d) => /\S+@\S+\.\S+/.test(d.email),
@@ -110,7 +116,7 @@ export function QuizForm() {
     },
     {
       key: "birthDate",
-      eyebrow: "3 of 6 · Your chart",
+      eyebrow: "3 of 7 · Your chart",
       title: "When were you born?",
       helper: "Your birth date sets the position of every planet in your chart — it's the foundation everything else is read from.",
       isValid: (d) => d.birthDate.trim().length > 0,
@@ -126,7 +132,7 @@ export function QuizForm() {
     },
     {
       key: "birthTime",
-      eyebrow: "4 of 6 · Precision",
+      eyebrow: "4 of 7 · Precision",
       title: "What time were you born?",
       helper: "Birth time determines your rising sign and house placements. Check your birth certificate if you have it — an estimate is fine if you don't.",
       isValid: () => true,
@@ -157,7 +163,7 @@ export function QuizForm() {
     },
     {
       key: "birthLocation",
-      eyebrow: "5 of 6 · Your chart",
+      eyebrow: "5 of 7 · Your chart",
       title: "Where were you born?",
       helper: "City and state (or country) is enough. Location fixes your chart to a specific place on Earth, which is what shapes your rising sign.",
       isValid: (d) => d.birthLocation.trim().length > 0,
@@ -173,8 +179,66 @@ export function QuizForm() {
       ),
     },
     {
+      key: "genderTimezone",
+      eyebrow: "6 of 7 · A couple more details",
+      title: "A little more about you",
+      helper: "These help us calculate some of the finer details in your chart accurately.",
+      isValid: () => true,
+      render: () => (
+        <div className="flex flex-col gap-5">
+          <div>
+            <p className="mb-2 text-sm font-medium text-ink">Gender</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => update("gender", "female")}
+                className={`flex-1 rounded-xl2 border px-4 py-2 text-sm ${
+                  values.gender === "female"
+                    ? "border-gold bg-plum-soft/60"
+                    : "border-stone/30 bg-white/50 text-ink-muted"
+                }`}
+              >
+                Female
+              </button>
+              <button
+                type="button"
+                onClick={() => update("gender", "male")}
+                className={`flex-1 rounded-xl2 border px-4 py-2 text-sm ${
+                  values.gender === "male"
+                    ? "border-gold bg-plum-soft/60"
+                    : "border-stone/30 bg-white/50 text-ink-muted"
+                }`}
+              >
+                Male
+              </button>
+            </div>
+          </div>
+          <div>
+            <p className="mb-2 text-sm font-medium text-ink">
+              Birth time zone
+            </p>
+            <select
+              value={values.utcOffset}
+              onChange={(e) => update("utcOffset", e.target.value)}
+              className={inputClass}
+            >
+              {UTC_OFFSETS.map((o) => (
+                <option key={o} value={o}>
+                  UTC{o >= 0 ? "+" : ""}
+                  {o}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-ink-faint">
+              The time zone in effect at your birth location and date.
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
       key: "focus",
-      eyebrow: "6 of 6 · Almost there",
+      eyebrow: "7 of 7 · Almost there",
       title: "What's on your mind most right now?",
       helper: "Your astrologer will write your report toward this — the rest of your chart is read in support of it.",
       isValid: (d) => d.focus !== "",
@@ -187,7 +251,7 @@ export function QuizForm() {
               onClick={() => update("focus", opt.value)}
               className={`rounded-xl2 border p-4 text-left transition-colors ${
                 values.focus === opt.value
-                  ? "border-gold bg-lavender-soft/60"
+                  ? "border-gold bg-plum-soft/60"
                   : "border-stone/30 bg-white/50 hover:border-mauve/50 hover:bg-petal/30"
               }`}
             >
@@ -281,6 +345,8 @@ export function QuizForm() {
               name="birthLocation"
               value={values.birthLocation}
             />
+            <input type="hidden" name="gender" value={values.gender} />
+            <input type="hidden" name="utcOffset" value={values.utcOffset} />
             <input type="hidden" name="focus" value={values.focus} />
             {values.consent && <input type="hidden" name="consent" value="on" />}
             <SubmitButton disabled={!canAdvance || !values.consent} />

@@ -4,14 +4,7 @@ import { useEffect, useState } from "react";
 import { BaziResult } from "@/lib/bazi-types";
 import { Card } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
-
-const ELEMENT_COLOR: Record<string, string> = {
-  wood: "bg-sage",
-  fire: "bg-burgundy",
-  earth: "bg-mauve",
-  metal: "bg-stone",
-  water: "bg-gold",
-};
+import { ElementCards } from "./ElementCards";
 
 function PillarCard({
   label,
@@ -62,12 +55,6 @@ export function BaziChart({
   name: string;
 }) {
   const { pillars, dayMaster, fiveElements, luckPillars } = result;
-  const total =
-    fiveElements.wood +
-    fiveElements.fire +
-    fiveElements.earth +
-    fiveElements.metal +
-    fiveElements.water || 1;
 
   // Bars start at 0 and grow to their real width just after mount, so the
   // balance visibly "fills in" instead of appearing fully drawn.
@@ -131,33 +118,8 @@ export function BaziChart({
         <h2 className="font-display text-lg text-aubergine">
           Five Element Balance
         </h2>
-        <div className="mt-4 space-y-2">
-          {(
-            [
-              ["wood", "Wood"],
-              ["fire", "Fire"],
-              ["earth", "Earth"],
-              ["metal", "Metal"],
-              ["water", "Water"],
-            ] as const
-          ).map(([key, label]) => (
-            <div key={key} className="flex items-center gap-3">
-              <span className="w-14 text-xs text-ink-muted">{label}</span>
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-line">
-                <div
-                  className={`h-full rounded-full transition-all duration-1000 ease-out ${ELEMENT_COLOR[key]}`}
-                  style={{
-                    width: barsGrown
-                      ? `${(fiveElements[key] / total) * 100}%`
-                      : "0%",
-                  }}
-                />
-              </div>
-              <span className="w-6 text-right text-xs text-ink-faint">
-                {fiveElements[key]}
-              </span>
-            </div>
-          ))}
+        <div className="mt-4">
+          <ElementCards fiveElements={fiveElements} grown={barsGrown} delayBase={100} />
         </div>
       </Card>
 

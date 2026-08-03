@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Inter, IBM_Plex_Mono } from "next/font/google";
+import { Gloock, Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
 // NOTE: kept the CSS variable name "--font-fraunces" so components using
 // font-display don't need to change — only the actual typeface swapped.
-const displayFont = Playfair_Display({
+// Gloock only ships one weight (400) — it's a bold-by-design display face,
+// not a variable-weight one, so font-medium/font-bold classes won't change
+// its rendering, only its own inherent shape carries the weight.
+const displayFont = Gloock({
   subsets: ["latin"],
   variable: "--font-fraunces",
-  weight: ["500", "600", "700"],
-  style: ["normal", "italic"],
+  weight: ["400"],
+  style: ["normal"],
   display: "swap",
 });
 

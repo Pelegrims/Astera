@@ -49,6 +49,8 @@ export interface ClientRequest {
   birthDate: string; // ISO date, e.g. "1994-03-12"
   birthTime?: string; // "HH:mm", optional — unknown time is common
   birthLocation: string;
+  gender: "male" | "female";
+  utcOffset: number; // e.g. -5 for US Eastern — used for the BaZi preview
   focus: FocusArea;
   consent: boolean;
   status: RequestStatus;
@@ -65,6 +67,8 @@ export interface QuizSubmission {
   birthDate: string;
   birthTime?: string;
   birthLocation: string;
+  gender: "male" | "female";
+  utcOffset: number;
   focus: FocusArea;
   consent: boolean;
 }

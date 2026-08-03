@@ -12,6 +12,8 @@ export async function submitQuiz(formData: FormData) {
   const birthDate = String(formData.get("birthDate") ?? "").trim();
   const birthTime = String(formData.get("birthTime") ?? "").trim();
   const birthLocation = String(formData.get("birthLocation") ?? "").trim();
+  const gender = String(formData.get("gender") ?? "female") as "male" | "female";
+  const utcOffset = Number(formData.get("utcOffset") ?? -5);
   const focus = String(formData.get("focus") ?? "") as FocusArea;
   const consent = formData.get("consent") === "on";
 
@@ -26,11 +28,16 @@ export async function submitQuiz(formData: FormData) {
     birthDate,
     birthTime: birthTime || undefined,
     birthLocation,
+    gender,
+    utcOffset,
     focus,
     consent,
   });
 
-  redirect(`/thank-you?name=${encodeURIComponent(request.firstName)}`);
+  // Redirect with the request id (not raw birth data) so the Thank You
+  // page can look up everything it needs server-side via the store,
+  // rather than passing personal data through the URL.
+  redirect(`/thank-you?id=${request.id}`);
 }
 
 export async function saveReport(id: string, report: ReportSections) {
