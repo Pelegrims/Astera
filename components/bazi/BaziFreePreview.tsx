@@ -39,11 +39,15 @@ export function BaziFreePreview({
         gender,
         ...parsed,
         utcOffset,
+        // Same solar-time correction as the /bazi calculator — without
+        // this the preview and the full calculator could show two
+        // different hour pillars for the same person.
+        lng,
       });
     } catch {
       return null;
     }
-  }, [parsed, gender, utcOffset, firstName]);
+  }, [parsed, gender, utcOffset, firstName, lng]);
 
   const natalResult = useMemo(() => {
     if (lat === undefined || lng === undefined) return null;
@@ -83,25 +87,17 @@ export function BaziFreePreview({
       <div className="mt-10 space-y-14">
         {natalResult && (
           <section>
-            <div className="mb-4 flex items-center justify-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-elementAir" />
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
-                Western Astrology
-              </p>
-              <span className="h-1.5 w-1.5 rounded-full bg-elementAir" />
-            </div>
+            <p className="mb-4 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
+              Western Astrology
+            </p>
             <NatalChartDisplay result={natalResult} />
           </section>
         )}
 
         <section>
-          <div className="mb-4 flex items-center justify-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-burgundy" />
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
-              BaZi — Four Pillars
-            </p>
-            <span className="h-1.5 w-1.5 rounded-full bg-burgundy" />
-          </div>
+          <p className="mb-4 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
+            BaZi — Four Pillars
+          </p>
           <ElementSpotlight
             fiveElements={baziResult.fiveElements}
             name={firstName}
@@ -110,17 +106,21 @@ export function BaziFreePreview({
             Day Master: {baziResult.dayMaster.stem} (
             {baziResult.dayMaster.element})
           </p>
+          {baziResult.solarTime && (
+            <p className="mt-1 text-center text-[11px] text-ink-faint">
+              Calculated from mean solar time{" "}
+              {String(baziResult.solarTime.hour).padStart(2, "0")}:
+              {String(baziResult.solarTime.minute).padStart(2, "0")} at your
+              birthplace.
+            </p>
+          )}
         </section>
 
         {matrixResult && (
           <section>
-            <div className="mb-4 flex items-center justify-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-aubergine" />
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
-                Matrix of Destiny
-              </p>
-              <span className="h-1.5 w-1.5 rounded-full bg-aubergine" />
-            </div>
+            <p className="mb-4 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
+              Matrix of Destiny
+            </p>
             <MatrixDisplay result={matrixResult} />
           </section>
         )}

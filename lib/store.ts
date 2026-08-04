@@ -16,7 +16,10 @@
  *     "birthTime" text,
  *     "birthLocation" text not null,
  *     gender text not null,
- *     "utcOffset" integer not null,
+ *     "utcOffset" numeric not null,  -- fractional hours (5.5 = India +5:30);
+ *                                    -- if the table was created earlier with
+ *                                    -- `integer`, run once in the SQL editor:
+ *                                    -- alter table requests alter column "utcOffset" type numeric using "utcOffset"::numeric;
  *     focus text not null,
  *     consent boolean not null default false,
  *     status text not null default 'new',

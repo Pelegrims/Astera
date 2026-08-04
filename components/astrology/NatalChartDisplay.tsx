@@ -7,23 +7,6 @@ const SIGN_SYMBOL: Record<string, string> = {
   Sagittarius: "♐", Capricorn: "♑", Aquarius: "♒", Pisces: "♓",
 };
 
-// The four classical elements of Western astrology (distinct from BaZi's
-// five Wu Xing elements) — used here purely to give each planet card a
-// consistent color by its sign's element, so the grid reads faster.
-const SIGN_ELEMENT: Record<string, "fire" | "earth" | "air" | "water"> = {
-  Aries: "fire", Leo: "fire", Sagittarius: "fire",
-  Taurus: "earth", Virgo: "earth", Capricorn: "earth",
-  Gemini: "air", Libra: "air", Aquarius: "air",
-  Cancer: "water", Scorpio: "water", Pisces: "water",
-};
-
-const ELEMENT_STYLE: Record<string, { text: string; bg: string }> = {
-  fire: { text: "text-elementFire", bg: "bg-elementFire/10" },
-  earth: { text: "text-elementEarth", bg: "bg-elementEarth/12" },
-  air: { text: "text-elementAir", bg: "bg-elementAir/10" },
-  water: { text: "text-elementWater", bg: "bg-elementWater/10" },
-};
-
 const PLANET_SYMBOL: Record<string, string> = {
   sun: "☉", moon: "☽", mercury: "☿", venus: "♀", mars: "♂",
   jupiter: "♃", saturn: "♄", uranus: "♅", neptune: "♆", pluto: "♇",
@@ -53,28 +36,24 @@ export function NatalChartDisplay({ result }: { result: NatalChartResult }) {
           Planets, Signs & Houses
         </h2>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
-          {result.planets.map((p) => {
-            const el = SIGN_ELEMENT[p.sign] ?? "earth";
-            const style = ELEMENT_STYLE[el];
-            return (
-              <div
-                key={p.key}
-                className={`rounded-xl2 border-2 border-transparent p-3 text-center ${style.bg}`}
-              >
-                <p className={`font-display text-2xl ${style.text}`}>
-                  {PLANET_SYMBOL[p.key]}
-                </p>
-                <p className="mt-1 text-xs font-medium text-ink">{p.label}</p>
-                <p className={`mt-1 text-[11px] font-medium ${style.text}`}>
-                  {SIGN_SYMBOL[p.sign]} {p.sign} {p.degreeInSign}°
-                </p>
-                <p className="mt-0.5 text-[10px] text-ink-faint">
-                  House {p.house}
-                  {p.retrograde ? " · Rx" : ""}
-                </p>
-              </div>
-            );
-          })}
+          {result.planets.map((p) => (
+            <div
+              key={p.key}
+              className="rounded-xl2 border border-line bg-bg-surface/60 p-3 text-center"
+            >
+              <p className="font-display text-2xl text-burgundy">
+                {PLANET_SYMBOL[p.key]}
+              </p>
+              <p className="mt-1 text-xs font-medium text-ink">{p.label}</p>
+              <p className="mt-1 text-[11px] text-ink-muted">
+                {SIGN_SYMBOL[p.sign]} {p.sign} {p.degreeInSign}°
+              </p>
+              <p className="mt-0.5 text-[10px] text-ink-faint">
+                House {p.house}
+                {p.retrograde ? " · Rx" : ""}
+              </p>
+            </div>
+          ))}
         </div>
       </Card>
 

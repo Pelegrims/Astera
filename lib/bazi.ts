@@ -1,5 +1,11 @@
 import { Solar } from "lunar-javascript";
-import { BaziInput, BaziPillar, BaziResult, FiveElementsBalance } from "./bazi-types";
+import {
+  BaziInput,
+  BaziPillar,
+  BaziResult,
+  FiveElementsBalance,
+  SolarTimeMoment,
+} from "./bazi-types";
 
 /**
  * This wraps `lunar-javascript` (MIT licensed, https://github.com/6tail/lunar-javascript),
@@ -48,17 +54,72 @@ function elementOfStem(stem: string): string {
   return STEM_ELEMENT[stem] ?? stem;
 }
 
-export function calculateBazi(input: BaziInput): BaziResult {
-  const { year, month, day, hour, minute, gender, utcOffset } = input;
+/**
+ * Converts a birth moment from civil clock time to MEAN LOCAL SOLAR TIME —
+ * the time frame classical BaZi (and Julia's reference calculator,
+ * feng-shui.ua) computes all four pillars in.
+ *
+ *   solar = clock − utcOffset + longitude/15h   (i.e. clock + lng×4min − offset)
+ *
+ * Verified against the reference's own printout for Kyiv, 1989-05-19:
+ * clock 20:00 at UTC+4 (Soviet decree time +1 and summer DST +1 over the
+ * base UTC+2 — both come out of the IANA tz database automatically via
+ * offsetForDate) → UTC 16:00 → +2:02 for longitude 30°31′E → 18:02, which
+ * is exactly the "Солнечное время: 18:02" the reference displays. Mean
+ * solar only — no equation-of-time term; the reference doesn't apply one
+ * either (May 19 EoT ≈ +3.5 min would have made it 18:05).
+ *
+ * Pure arithmetic on a UTC-ms timeline, so shifts across midnight/month/
+ * year boundaries are handled by Date itself and no local timezone of the
+ * machine running this ever leaks in (only Date.UTC + getUTC* are used).
+ */
+export function meanSolarMoment(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+  utcOffsetHours: number,
+  lng: number
+): SolarTimeMoment {
+  const shiftMinutes = Math.round(lng * 4 - utcOffsetHours * 60);
+  const ms =
+    Date.UTC(year, month - 1, day, hour, minute) + shiftMinutes * 60_000;
+  const d = new Date(ms);
+  return {
+    year: d.getUTCFullYear(),
+    month: d.getUTCMonth() + 1,
+    day: d.getUTCDate(),
+    hour: d.getUTCHours(),
+    minute: d.getUTCMinutes(),
+    shiftMinutes,
+  };
+}
 
-  // lunar-javascript works in local (China-relative) civil time; we adjust
-  // for the person's actual birth timezone by converting to UTC first,
-  // then to the +8 (China Standard Time) reference the library expects
-  // internally is NOT required — lunar-javascript computes stems/branches
-  // from local civil clock time directly, per the birth location. So we
-  // pass the birth date/time as-is; the UTC offset is kept for display
-  // and any future "true solar time" refinement, not fed into the library.
-  const solar = Solar.fromYmdHms(year, month, day, hour, minute, 0);
+export function calculateBazi(input: BaziInput): BaziResult {
+  const { year, month, day, hour, minute, gender, utcOffset, lng } = input;
+
+  // All four pillars (hour branch, the 23:00 day boundary, and which side
+  // of a solar-term instant the birth falls on) are taken in mean local
+  // solar time when we know the longitude — this is what fixed the
+  // "1 hour off for USSR-era dates" discrepancy Julia caught: we were
+  // feeding raw clock time in, while her reference computes from solar
+  // time. Without a longitude (old stored rows predating this field) we
+  // keep the legacy raw-clock behavior rather than guessing.
+  //
+  // Known edge case, accepted for now: lunar-javascript evaluates the
+  // solar-term (节气) instants themselves in China Standard Time, so for
+  // births within a few hours of a month-boundary term the month pillar
+  // can differ from a locally-computed term instant. Same class of
+  // tolerance exists in the reference tools; revisit only if a real
+  // client chart lands on a boundary.
+  const solarMoment: SolarTimeMoment | undefined =
+    typeof lng === "number" && Number.isFinite(lng)
+      ? meanSolarMoment(year, month, day, hour, minute, utcOffset, lng)
+      : undefined;
+
+  const t = solarMoment ?? { year, month, day, hour, minute };
+  const solar = Solar.fromYmdHms(t.year, t.month, t.day, t.hour, t.minute, 0);
   const lunar = solar.getLunar();
   const eightChar = lunar.getEightChar();
 
@@ -163,5 +224,6 @@ export function calculateBazi(input: BaziInput): BaziResult {
     fiveElements,
     luckPillars,
     luckStartAge: yun.getStartYear ? yun.getStartYear() : 0,
+    solarTime: solarMoment,
   };
 }

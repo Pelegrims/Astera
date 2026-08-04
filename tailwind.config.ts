@@ -43,7 +43,6 @@ const config: Config = {
         elementEarth: "#8B6B48",
         elementMetal: "#9498A0",
         elementWater: "#356387",
-        elementAir: "#6E71A0",
         petal: "#F2E2E0", // Petal Pink — soft warm tint
         line: "rgba(43, 34, 48, 0.10)",
       },

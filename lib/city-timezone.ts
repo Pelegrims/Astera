@@ -1,7 +1,6 @@
 import cityTimezones from "city-timezones";
 import { DateTime } from "luxon";
 import { resolveAlternateNames } from "./city-aliases";
-import { MAJOR_US_CITIES } from "./major-us-cities";
 
 export interface CityMatch {
   label: string; // "New York, New York, United States of America"
@@ -48,19 +47,9 @@ export function searchCities(query: string): CityMatch[] {
     return true;
   });
 
-  // Population data in the dataset can be patchy for smaller US towns —
-  // well-known major cities are boosted to the top regardless, so
-  // searching a state name reliably surfaces recognizable cities first
-  // (e.g. "New Jersey" -> Newark, Jersey City, Trenton) instead of
-  // whatever obscure town happens to have a populated `pop` field.
-  const effectivePop = (r: any) => {
-    const isMajorUsCity =
-      r?.country === "United States of America" &&
-      MAJOR_US_CITIES.has(String(r?.city ?? "").toLowerCase());
-    return (isMajorUsCity ? 50_000_000 : 0) + (r?.pop ?? 0);
-  };
-
-  const sorted = merged.sort((a: any, b: any) => effectivePop(b) - effectivePop(a));
+  const sorted = merged.sort(
+    (a: any, b: any) => (b.pop ?? 0) - (a.pop ?? 0)
+  );
 
   return sorted.slice(0, 8).map((r: any) => ({
     label: [r.city, r.province, r.country].filter(Boolean).join(", "),
@@ -72,10 +61,15 @@ export function searchCities(query: string): CityMatch[] {
 
 /**
  * Given an IANA timezone and a specific birth date/time, returns the
- * exact UTC offset in whole hours that was in effect at that moment —
- * this correctly accounts for historical daylight-saving rules (unlike a
- * fixed "current" UTC offset), as long as the date is within range of the
- * IANA tz database.
+ * exact UTC offset (in hours, possibly fractional — e.g. 5.5 for India,
+ * 4 for Kyiv in the summer of 1989) that was in effect at that moment.
+ * This correctly accounts for historical rules — Soviet decree time,
+ * daylight saving, colonial half-hour zones — as long as the date is
+ * within range of the IANA tz database.
+ *
+ * NOTE: this used to round to whole hours, which silently corrupted
+ * half-hour zones (India +5:30 became +6). Callers that display it
+ * should use formatUtcOffset() rather than string-concatenating.
  */
 export function offsetForDate(
   timezone: string,
@@ -90,5 +84,26 @@ export function offsetForDate(
     { zone: timezone }
   );
   if (!dt.isValid) return 0;
-  return Math.round(dt.offset / 60);
+  return dt.offset / 60;
+}
+
+/** "UTC+4", "UTC+5:30", "UTC-3:30" — for fractional-hour offsets. */
+export function formatUtcOffset(offsetHours: number): string {
+  const totalMinutes = Math.round(offsetHours * 60);
+  const sign = totalMinutes < 0 ? "-" : "+";
+  const abs = Math.abs(totalMinutes);
+  const h = Math.floor(abs / 60);
+  const m = abs % 60;
+  return `UTC${sign}${h}${m ? `:${String(m).padStart(2, "0")}` : ""}`;
+}
+
+/** 30.5167 → "30°31′E" — matches how reference BaZi calculators print it. */
+export function formatLongitude(lng: number): string {
+  const dir = lng < 0 ? "W" : "E";
+  const abs = Math.abs(lng);
+  const deg = Math.floor(abs);
+  const min = Math.round((abs - deg) * 60);
+  // 30.999 → rounds to 31°00′, not 30°60′
+  const carried = min === 60;
+  return `${carried ? deg + 1 : deg}°${String(carried ? 0 : min).padStart(2, "0")}′${dir}`;
 }

@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { calculateBazi } from "@/lib/bazi";
 import { calculateNatalChart } from "@/lib/astrology";
 import { calculateMatrix } from "@/lib/matrix-of-destiny";
-import { offsetForDate } from "@/lib/city-timezone";
+import {
+  offsetForDate,
+  formatUtcOffset,
+  formatLongitude,
+} from "@/lib/city-timezone";
 import { BaziInput, BaziResult } from "@/lib/bazi-types";
 import { NatalChartResult } from "@/lib/astrology-types";
 import { MatrixResult } from "@/lib/matrix-types";
@@ -34,6 +38,14 @@ export function BaziCalculator() {
   );
 
   const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
+  // The exact inputs the last calculation ran with — rendered next to the
+  // result so a chart can be verified against reference calculators
+  // without guessing what offset/longitude was used under the hood.
+  const [chartMeta, setChartMeta] = useState<{
+    utcOffset: number;
+    lng: number;
+    clock: string;
+  } | null>(null);
   const [natalResult, setNatalResult] = useState<NatalChartResult | null>(
     null
   );
@@ -44,6 +56,26 @@ export function BaziCalculator() {
   const resultRef = useRef<HTMLDivElement>(null);
 
   const hasResult = Boolean(baziResult || natalResult || matrixResult);
+
+  // Live, date-aware offset preview under the city field — the fastest way
+  // to sanity-check a historical chart ("Kyiv, May 1989" must say UTC+4:
+  // Soviet decree time + summer DST, both straight from the IANA database).
+  // Note `hour === "" ? 12 : Number(hour)` rather than `Number(hour) || 12`:
+  // midnight is a valid 0 and must not be coerced away.
+  const liveOffsetLabel = (() => {
+    if (!timezone || !year || !month || !day) return null;
+    const h = timeUnknown || hour === "" ? 12 : Number(hour);
+    const m = timeUnknown || minute === "" ? 0 : Number(minute);
+    const off = offsetForDate(
+      timezone,
+      Number(year),
+      Number(month),
+      Number(day),
+      h,
+      m
+    );
+    return `${formatUtcOffset(off)} on this date`;
+  })();
 
   // Scroll the result into view the moment it appears — without this, a
   // result rendered below the fold can look like nothing happened at all.
@@ -83,6 +115,11 @@ export function BaziCalculator() {
     setBaziResult(null);
     setNatalResult(null);
     setMatrixResult(null);
+    setChartMeta({
+      utcOffset,
+      lng: coords.lng,
+      clock: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
+    });
 
     // A brief, deliberate pause — the calculation itself is instant, but a
     // beat of "Calculating..." makes it clear the button press registered,
@@ -98,6 +135,7 @@ export function BaziCalculator() {
           hour: h,
           minute: m,
           utcOffset,
+          lng: coords.lng,
         };
         setBaziResult(calculateBazi(baziInput));
 
@@ -268,7 +306,9 @@ export function BaziCalculator() {
             />
             <p className="mt-1 text-xs text-ink-faint">
               {timezone
-                ? `Time zone resolved: ${timezone}`
+                ? `Time zone resolved: ${timezone}${
+                    liveOffsetLabel ? ` — ${liveOffsetLabel}` : ""
+                  }`
                 : "Start typing and pick your city from the list — we'll work out the correct time zone and exact chart automatically."}
             </p>
           </div>
@@ -286,7 +326,6 @@ export function BaziCalculator() {
           {natalResult && (
             <section>
               <div className="mb-6 text-center">
-                <div className="mx-auto mb-3 h-[3px] w-10 rounded-full bg-elementAir" />
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-ink-faint">
                   System 1
                 </p>
@@ -301,13 +340,25 @@ export function BaziCalculator() {
           {baziResult && (
             <section>
               <div className="mb-6 text-center">
-                <div className="mx-auto mb-3 h-[3px] w-10 rounded-full bg-burgundy" />
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-ink-faint">
                   System 2
                 </p>
                 <h2 className="mt-1 font-display text-2xl text-aubergine">
                   BaZi — Four Pillars
                 </h2>
+                {baziResult.solarTime && chartMeta && (
+                  <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-ink-faint">
+                    Pillars computed from mean solar time:{" "}
+                    {String(baziResult.solarTime.day).padStart(2, "0")}.
+                    {String(baziResult.solarTime.month).padStart(2, "0")}.
+                    {baziResult.solarTime.year}{" "}
+                    {String(baziResult.solarTime.hour).padStart(2, "0")}:
+                    {String(baziResult.solarTime.minute).padStart(2, "0")}{" "}
+                    (birth clock {chartMeta.clock} at{" "}
+                    {formatUtcOffset(chartMeta.utcOffset)}, longitude{" "}
+                    {formatLongitude(chartMeta.lng)})
+                  </p>
+                )}
               </div>
               <BaziChart result={baziResult} name={name.trim() || "Your"} />
             </section>
@@ -316,7 +367,6 @@ export function BaziCalculator() {
           {matrixResult && (
             <section>
               <div className="mb-6 text-center">
-                <div className="mx-auto mb-3 h-[3px] w-10 rounded-full bg-aubergine" />
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-ink-faint">
                   System 3
                 </p>

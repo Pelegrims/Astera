@@ -141,12 +141,30 @@ documented API but hasn't been executed end-to-end yet — if any method
 name doesn't match what actually installs, check
 `node_modules/lunar-javascript`'s README for the current `EightChar` API.
 
-The timezone field is a manual UTC-offset dropdown rather than automatic
-city-based historical timezone detection (the reference tool this was
-modeled on does this automatically, including historical DST/Soviet-era
-clock changes) — that's a meaningfully more complex feature to get right
-and verify, left for a second pass once the core calculator is confirmed
-accurate.
+### How birth time is handled (and the USSR-era "1 hour off" fix)
+
+The city autocomplete resolves an IANA timezone, and `offsetForDate()`
+(`lib/city-timezone.ts`) returns the exact historical UTC offset for the
+birth moment — including Soviet decree time and seasonal DST, straight
+from the IANA tz database. Offsets are minute-accurate (India +5:30 stays
++5:30; it used to round to +6).
+
+BaZi pillars are then computed from **mean local solar time**, not the
+clock: `solar = clock − utcOffset + longitude×4min` (see
+`meanSolarMoment()` in `lib/bazi.ts`). This is the convention Julia's
+reference calculator (feng-shui.ua) uses, and it's what resolved the
+1-hour discrepancy she caught on USSR-era dates. Verified against the
+reference's own rendered output for Kyiv, 1989-05-19: clock 20:00 at
+UTC+4 (decree +1 and DST +1 over base UTC+2) → solar **18:02** → pillars
+己巳 / 己巳 / 己卯 / **癸酉** — exact match. The old code fed raw clock
+time in, which put 20:00 into the 戌 hour (19–21) instead of the correct
+酉 (17–19 solar). The UI now prints the solar time it used under the
+pillars, so any chart can be checked against a reference at a glance.
+
+The **Western astrology** chart deliberately does *not* use solar time —
+natal charts are computed from civil time converted to UT, which
+`circular-natal-horoscope-js` handles internally from the coordinates.
+The two systems using different time frames is correct, not a bug.
 
 ## Setting up Supabase (real, persistent storage)
 
@@ -171,13 +189,22 @@ Vercel.
      "birthTime" text,
      "birthLocation" text not null,
      gender text not null,
-     "utcOffset" integer not null,
+     "utcOffset" numeric not null,
      focus text not null,
      consent boolean not null default false,
      status text not null default 'new',
      "createdAt" timestamptz not null default now(),
      report jsonb not null default '{}'::jsonb
    );
+   ```
+
+   If the table was already created earlier with `"utcOffset" integer`,
+   run this once in the Supabase SQL editor (offsets are now
+   minute-accurate, so half-hour zones like India +5.5 need a numeric
+   column — inserting 5.5 into an integer column fails):
+
+   ```sql
+   alter table requests alter column "utcOffset" type numeric using "utcOffset"::numeric;
    ```
 
 3. In the Supabase dashboard, go to **Project Settings → API** and copy:
