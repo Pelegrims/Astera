@@ -106,7 +106,11 @@ export function ElementSpotlight({
         <p className="mb-3 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
           Your full balance
         </p>
-        <ElementCards fiveElements={fiveElements} delayBase={150} />
+        <ElementCards
+          fiveElements={fiveElements}
+          delayBase={150}
+          highlightKey={strongestKey}
+        />
       </div>
     </div>
   );

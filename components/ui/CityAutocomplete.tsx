@@ -10,7 +10,7 @@ export function CityAutocomplete({
   placeholder = "City, State/Country",
 }: {
   value: string;
-  onSelect: (label: string, timezone: string | null) => void;
+  onSelect: (label: string, match: CityMatch | null) => void;
   inputClassName: string;
   placeholder?: string;
 }) {
@@ -18,7 +18,7 @@ export function CityAutocomplete({
   const [isOpen, setIsOpen] = useState(false);
 
   function handleChange(text: string) {
-    // Typing freely invalidates any previously resolved timezone, until
+    // Typing freely invalidates any previously resolved city match, until
     // the person picks a suggestion again.
     onSelect(text, null);
     setSuggestions(searchCities(text));
@@ -26,7 +26,7 @@ export function CityAutocomplete({
   }
 
   function handlePick(match: CityMatch) {
-    onSelect(match.label, match.timezone);
+    onSelect(match.label, match);
     setSuggestions([]);
     setIsOpen(false);
   }

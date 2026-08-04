@@ -172,9 +172,9 @@ export function QuizForm() {
           <div>
             <CityAutocomplete
               value={values.birthLocation}
-              onSelect={(label, tz) => {
+              onSelect={(label, match) => {
                 update("birthLocation", label);
-                update("timezone", tz);
+                update("timezone", match?.timezone ?? null);
               }}
               inputClassName={inputClass}
             />

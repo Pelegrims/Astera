@@ -18,7 +18,7 @@ export function Footer() {
           href="/bazi"
           className="mt-1 text-xs text-burgundy hover:underline"
         >
-          Free BaZi chart calculator →
+          Free 3-system chart calculator →
         </a>
       </Container>
     </footer>

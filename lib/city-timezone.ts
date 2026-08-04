@@ -4,6 +4,8 @@ import { DateTime } from "luxon";
 export interface CityMatch {
   label: string; // "New York, New York, United States of America"
   timezone: string; // IANA zone, e.g. "America/New_York"
+  lat: number;
+  lng: number;
 }
 
 /**
@@ -14,13 +16,18 @@ export interface CityMatch {
  */
 export function searchCities(query: string): CityMatch[] {
   const trimmed = query.trim();
-  if (trimmed.length < 2) return [];
+  if (trimmed.length < 1) return [];
 
   const results = cityTimezones.lookupViaCity(trimmed);
+  const sorted = [...results].sort(
+    (a: any, b: any) => (b.pop ?? 0) - (a.pop ?? 0)
+  );
 
-  return results.slice(0, 8).map((r: any) => ({
+  return sorted.slice(0, 8).map((r: any) => ({
     label: [r.city, r.province, r.country].filter(Boolean).join(", "),
     timezone: r.timezone,
+    lat: r.lat,
+    lng: r.lng,
   }));
 }
 

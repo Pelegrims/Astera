@@ -61,10 +61,15 @@ export function ElementCards({
   fiveElements,
   grown = true,
   delayBase = 0,
+  highlightKey,
 }: {
   fiveElements: FiveElementsBalance;
   grown?: boolean;
   delayBase?: number;
+  /** If set, only this element gets the "Strongest" tag — even when
+   * there's a numeric tie with another element — so it always matches
+   * whichever one is shown as the dominant element elsewhere on the page. */
+  highlightKey?: keyof FiveElementsBalance;
 }) {
   const total =
     fiveElements.wood +
@@ -86,7 +91,9 @@ export function ElementCards({
       {ELEMENTS.map((el, i) => {
         const Icon = el.icon;
         const count = fiveElements[el.key];
-        const isStrongest = count === max && count > 0;
+        const isStrongest = highlightKey
+          ? el.key === highlightKey
+          : count === max && count > 0;
         return (
           <div
             key={el.key}

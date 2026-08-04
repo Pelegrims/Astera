@@ -2,9 +2,9 @@ import { Container } from "@/components/ui/Container";
 import { BaziCalculator } from "@/components/bazi/BaziCalculator";
 
 export const metadata = {
-  title: "Free BaZi Chart Calculator — Astera",
+  title: "Free Multi-System Chart Calculator — Astera",
   description:
-    "Calculate your Four Pillars (BaZi) chart free — Year, Month, Day, and Hour pillars, Day Master, Five Elements balance, and your 10-year luck cycles.",
+    "Enter your birth details once and get three free readings: Western astrology (planets, houses, aspects), BaZi Four Pillars, and Matrix of Destiny.",
 };
 
 export default function BaziPage() {
@@ -19,14 +19,14 @@ export default function BaziPage() {
             Free Chart Calculator
           </p>
           <h1 className="mt-5 text-balance font-display text-3xl font-medium leading-tight text-aubergine sm:text-4xl">
-            Your Four Pillars,
+            One birth chart,
             <br />
-            <span className="italic text-burgundy">calculated instantly.</span>
+            <span className="italic text-burgundy">three systems.</span>
           </h1>
           <p className="mx-auto mt-5 max-w-md text-balance text-base leading-relaxed text-ink-muted">
-            BaZi (八字), the Chinese "Four Pillars of Destiny" — enter your
-            birth details for a free chart: your pillars, Day Master, five
-            element balance, and 10-year luck cycles.
+            Enter your birth details once — get a free reading across
+            Western astrology (planets, houses, aspects), BaZi (Chinese Four
+            Pillars), and Matrix of Destiny, side by side.
           </p>
         </div>
 

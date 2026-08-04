@@ -217,3 +217,33 @@ overlay via `@paddle/paddle-js` (see `components/ui/PaddleCheckoutButton.tsx`).
 sandbox), update the three env vars in Vercel with the new `live_` token,
 new price ID, and `NEXT_PUBLIC_PADDLE_ENVIRONMENT=production`, then redeploy.
 No code changes needed — this is purely a config swap.
+
+## Multi-system calculator (`/bazi`) — now 3 systems in one form
+
+The calculator now computes three readings from one birth date/time/city
+entry: **Western astrology**, **BaZi**, and **Matrix of Destiny**.
+
+**Western astrology** (`lib/astrology.ts`) uses
+[`circular-natal-horoscope-js`](https://github.com/0xStarcat/CircularNatalHoroscopeJS)
+(Unlicense) — a real astronomical ephemeris (Moshier), not an
+approximation. Computes planet signs, exact degrees, house placement
+(Placidus system), and aspects with a 2° orb, as requested. Like the BaZi
+integration, **this hasn't been run end-to-end here** (no network access
+in this environment to `npm install` and test it) — before trusting it
+for real clients, run it locally and check a chart you already know the
+correct planets/houses for.
+
+**Matrix of Destiny** (`lib/matrix-of-destiny.ts`) is **our own
+implementation** of the commonly-circulated public digit-sum method
+(reduce any number above 22 by summing its digits). Different
+popularizers of this system have their own trademarked diagrams and
+sometimes slightly different point layouts and interpretive labels — what's
+here is a reasonable, original rendering of the public method, not a copy
+of any specific practitioner's branded version. If Julia has a preferred
+exact method/labels, this can be adjusted to match.
+
+**Explicitly left out:** ХВД (chrono-vector diagnostics) / chakra
+analysis — per Mark, this is Julia's own closed methodology, so it isn't
+something to approximate or fabricate a formula for. If she shares her
+actual calculation method later, it can be added the same way BaZi and
+astrology were.
