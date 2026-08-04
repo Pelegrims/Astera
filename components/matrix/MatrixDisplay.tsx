@@ -29,7 +29,7 @@ export function MatrixDisplay({ result }: { result: MatrixResult }) {
               stroke="rgba(43,34,48,0.14)"
               strokeWidth="1"
             />
-            <circle cx="150" cy="150" r="45" fill="rgba(107,30,46,0.06)" stroke="rgba(107,30,46,0.3)" strokeWidth="1" />
+            <circle cx="150" cy="150" r="45" fill="rgba(107,30,46,0.10)" stroke="rgba(107,30,46,0.5)" strokeWidth="1.5" />
           </svg>
 
           {/* center value */}
@@ -48,10 +48,10 @@ export function MatrixDisplay({ result }: { result: MatrixResult }) {
             return (
               <div
                 key={p.key}
-                className="absolute flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-line bg-bg-surface text-center"
+                className="absolute flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border-2 border-burgundy/25 bg-white text-center shadow-sm"
                 style={{ left: `${x}%`, top: `${y}%` }}
               >
-                <p className="font-display text-base text-aubergine">
+                <p className="font-display text-lg font-medium text-burgundy">
                   {p.value}
                 </p>
               </div>

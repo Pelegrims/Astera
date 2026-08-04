@@ -1,6 +1,7 @@
 import cityTimezones from "city-timezones";
 import { DateTime } from "luxon";
 import { resolveAlternateNames } from "./city-aliases";
+import { MAJOR_US_CITIES } from "./major-us-cities";
 
 export interface CityMatch {
   label: string; // "New York, New York, United States of America"
@@ -47,9 +48,19 @@ export function searchCities(query: string): CityMatch[] {
     return true;
   });
 
-  const sorted = merged.sort(
-    (a: any, b: any) => (b.pop ?? 0) - (a.pop ?? 0)
-  );
+  // Population data in the dataset can be patchy for smaller US towns —
+  // well-known major cities are boosted to the top regardless, so
+  // searching a state name reliably surfaces recognizable cities first
+  // (e.g. "New Jersey" -> Newark, Jersey City, Trenton) instead of
+  // whatever obscure town happens to have a populated `pop` field.
+  const effectivePop = (r: any) => {
+    const isMajorUsCity =
+      r?.country === "United States of America" &&
+      MAJOR_US_CITIES.has(String(r?.city ?? "").toLowerCase());
+    return (isMajorUsCity ? 50_000_000 : 0) + (r?.pop ?? 0);
+  };
+
+  const sorted = merged.sort((a: any, b: any) => effectivePop(b) - effectivePop(a));
 
   return sorted.slice(0, 8).map((r: any) => ({
     label: [r.city, r.province, r.country].filter(Boolean).join(", "),

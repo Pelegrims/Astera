@@ -3,6 +3,7 @@
 import { BaziResult } from "@/lib/bazi-types";
 import { Card } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
+import { elementColor } from "@/lib/element-colors";
 import { ElementSpotlight } from "./ElementSpotlight";
 
 function PillarCard({
@@ -11,6 +12,7 @@ function PillarCard({
   branch,
   hiddenStems,
   tenGod,
+  element,
   highlight = false,
   delayMs = 0,
 }: {
@@ -19,29 +21,32 @@ function PillarCard({
   branch: string;
   hiddenStems: string[];
   tenGod: string;
+  element: string;
   highlight?: boolean;
   delayMs?: number;
 }) {
+  const c = elementColor(element);
   return (
     <div
-      className={`animate-card-pop rounded-xl2 border p-4 text-center opacity-0 ${
-        highlight
-          ? "border-burgundy bg-burgundy/5"
-          : "border-line bg-bg-surface/60"
+      className={`animate-card-pop rounded-xl2 border-2 p-4 text-center opacity-0 ${c.bg} ${
+        highlight ? `${c.border} shadow-[0_0_0_3px_rgba(0,0,0,0.02)]` : "border-transparent"
       }`}
       style={{ animationDelay: `${delayMs}ms` }}
     >
       <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink-faint">
         {label}
       </p>
-      <p className="mt-2 font-display text-3xl text-aubergine">
+      <p className={`mt-2 font-display text-3xl ${c.text}`}>
         {stem}
         {branch}
+      </p>
+      <p className={`mt-1 text-[10px] font-medium uppercase tracking-wide ${c.text}`}>
+        {element}
       </p>
       <p className="mt-2 text-xs text-ink-muted">
         Hidden: {hiddenStems.join(" ") || "—"}
       </p>
-      <p className="mt-1 text-xs font-medium text-burgundy">{tenGod}</p>
+      <p className="mt-1 text-xs font-medium text-ink">{tenGod}</p>
     </div>
   );
 }
@@ -76,6 +81,7 @@ export function BaziChart({
           branch={pillars.hour.branch}
           hiddenStems={pillars.hour.hiddenStems}
           tenGod={pillars.hour.tenGodStem}
+          element={pillars.hour.element}
           delayMs={0}
         />
         <PillarCard
@@ -84,6 +90,7 @@ export function BaziChart({
           branch={pillars.day.branch}
           hiddenStems={pillars.day.hiddenStems}
           tenGod={pillars.day.tenGodStem}
+          element={pillars.day.element}
           highlight
           delayMs={150}
         />
@@ -93,6 +100,7 @@ export function BaziChart({
           branch={pillars.month.branch}
           hiddenStems={pillars.month.hiddenStems}
           tenGod={pillars.month.tenGodStem}
+          element={pillars.month.element}
           delayMs={300}
         />
         <PillarCard
@@ -101,6 +109,7 @@ export function BaziChart({
           branch={pillars.year.branch}
           hiddenStems={pillars.year.hiddenStems}
           tenGod={pillars.year.tenGodStem}
+          element={pillars.year.element}
           delayMs={450}
         />
       </div>

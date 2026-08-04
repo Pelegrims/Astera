@@ -286,6 +286,7 @@ export function BaziCalculator() {
           {natalResult && (
             <section>
               <div className="mb-6 text-center">
+                <div className="mx-auto mb-3 h-[3px] w-10 rounded-full bg-elementAir" />
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-ink-faint">
                   System 1
                 </p>
@@ -300,6 +301,7 @@ export function BaziCalculator() {
           {baziResult && (
             <section>
               <div className="mb-6 text-center">
+                <div className="mx-auto mb-3 h-[3px] w-10 rounded-full bg-burgundy" />
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-ink-faint">
                   System 2
                 </p>
@@ -314,6 +316,7 @@ export function BaziCalculator() {
           {matrixResult && (
             <section>
               <div className="mb-6 text-center">
+                <div className="mx-auto mb-3 h-[3px] w-10 rounded-full bg-aubergine" />
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-ink-faint">
                   System 3
                 </p>

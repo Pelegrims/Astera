@@ -83,17 +83,25 @@ export function BaziFreePreview({
       <div className="mt-10 space-y-14">
         {natalResult && (
           <section>
-            <p className="mb-4 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
-              Western Astrology
-            </p>
+            <div className="mb-4 flex items-center justify-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-elementAir" />
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
+                Western Astrology
+              </p>
+              <span className="h-1.5 w-1.5 rounded-full bg-elementAir" />
+            </div>
             <NatalChartDisplay result={natalResult} />
           </section>
         )}
 
         <section>
-          <p className="mb-4 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
-            BaZi — Four Pillars
-          </p>
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-burgundy" />
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
+              BaZi — Four Pillars
+            </p>
+            <span className="h-1.5 w-1.5 rounded-full bg-burgundy" />
+          </div>
           <ElementSpotlight
             fiveElements={baziResult.fiveElements}
             name={firstName}
@@ -106,9 +114,13 @@ export function BaziFreePreview({
 
         {matrixResult && (
           <section>
-            <p className="mb-4 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
-              Matrix of Destiny
-            </p>
+            <div className="mb-4 flex items-center justify-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-aubergine" />
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-faint">
+                Matrix of Destiny
+              </p>
+              <span className="h-1.5 w-1.5 rounded-full bg-aubergine" />
+            </div>
             <MatrixDisplay result={matrixResult} />
           </section>
         )}
