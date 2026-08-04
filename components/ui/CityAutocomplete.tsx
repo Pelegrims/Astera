@@ -21,7 +21,12 @@ export function CityAutocomplete({
     // Typing freely invalidates any previously resolved city match, until
     // the person picks a suggestion again.
     onSelect(text, null);
-    setSuggestions(searchCities(text));
+    try {
+      setSuggestions(searchCities(text));
+    } catch {
+      // Never let a lookup failure break typing in the input itself.
+      setSuggestions([]);
+    }
     setIsOpen(true);
   }
 

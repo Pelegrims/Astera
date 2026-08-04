@@ -1,77 +1,79 @@
 /**
- * The city-timezones dataset only knows cities by their current official
- * name — searching an old/renamed name (very common across the former
- * USSR, and elsewhere in the world) returns nothing on its own. This maps
- * historical/alternate names to whatever name the city is searchable
- * under today, so typing either one works.
+ * The city-timezones dataset may only have ONE name on file for a city
+ * that's had a historical rename (very common across the former USSR,
+ * and elsewhere in the world) — and we can't be certain in advance
+ * whether it stored the old name or the current one. So rather than
+ * mapping "old name -> new name" in one direction (a guess that could be
+ * wrong), each entry below is a GROUP of known names for the same city.
+ * Typing any one of them searches the dataset under all of them, so it
+ * works regardless of which variant the dataset actually has on file.
  *
  * Not exhaustive — extend as needed. Focused on renames common enough
- * that someone might reasonably type the old name from memory.
+ * that someone might reasonably type an old name from memory.
  */
-export const CITY_ALIASES: Record<string, string> = {
+export const CITY_NAME_GROUPS: string[][] = [
   // Ukraine
-  dnepropetrovsk: "Dnipro",
-  dnipropetrovsk: "Dnipro",
-  kiev: "Kyiv",
-  kharkov: "Kharkiv",
-  lvov: "Lviv",
-  lemberg: "Lviv",
-  odessa: "Odesa",
-  nikolaev: "Mykolaiv",
-  zaporozhye: "Zaporizhzhia",
-  ivano_frankovsk: "Ivano-Frankivsk",
+  ["Dnipro", "Dnipropetrovsk", "Dnepropetrovsk"],
+  ["Kyiv", "Kiev"],
+  ["Kharkiv", "Kharkov"],
+  ["Lviv", "Lvov", "Lemberg"],
+  ["Odesa", "Odessa"],
+  ["Mykolaiv", "Nikolaev"],
+  ["Zaporizhzhia", "Zaporozhye", "Zaporizhia"],
+  ["Ivano-Frankivsk", "Ivano-Frankovsk"],
 
   // Russia / USSR
-  leningrad: "Saint Petersburg",
-  petrograd: "Saint Petersburg",
-  stalingrad: "Volgograd",
-  tsaritsyn: "Volgograd",
-  gorky: "Nizhny Novgorod",
-  gorkiy: "Nizhny Novgorod",
-  sverdlovsk: "Yekaterinburg",
-  kuybyshev: "Samara",
-  kalinin: "Tver",
-  molotov: "Perm",
-  ordzhonikidze: "Vladikavkaz",
+  ["Saint Petersburg", "Leningrad", "Petrograd", "St Petersburg"],
+  ["Volgograd", "Stalingrad", "Tsaritsyn"],
+  ["Nizhny Novgorod", "Gorky", "Gorkiy"],
+  ["Yekaterinburg", "Sverdlovsk"],
+  ["Samara", "Kuybyshev"],
+  ["Tver", "Kalinin"],
+  ["Perm", "Molotov"],
+  ["Vladikavkaz", "Ordzhonikidze"],
 
   // Central Asia / Caucasus
-  alma_ata: "Almaty",
-  frunze: "Bishkek",
-  stalinabad: "Dushanbe",
-  chkalov: "Orenburg",
-  tiflis: "Tbilisi",
-  yerivan: "Yerevan",
-  kishinev: "Chisinau",
+  ["Almaty", "Alma-Ata"],
+  ["Bishkek", "Frunze"],
+  ["Dushanbe", "Stalinabad"],
+  ["Orenburg", "Chkalov"],
+  ["Tbilisi", "Tiflis"],
+  ["Chisinau", "Kishinev"],
+  ["Astana", "Nur-Sultan", "Akmola"],
 
   // Elsewhere in the world with well-known historical renames
-  bombay: "Mumbai",
-  calcutta: "Kolkata",
-  madras: "Chennai",
-  saigon: "Ho Chi Minh City",
-  rangoon: "Yangon",
-  constantinople: "Istanbul",
-  peking: "Beijing",
-  canton: "Guangzhou",
-  batavia: "Jakarta",
-  salisbury: "Harare",
-  leopoldville: "Kinshasa",
-  ceylon: "Colombo",
-};
+  ["Mumbai", "Bombay"],
+  ["Kolkata", "Calcutta"],
+  ["Chennai", "Madras"],
+  ["Ho Chi Minh City", "Saigon"],
+  ["Yangon", "Rangoon"],
+  ["Istanbul", "Constantinople"],
+  ["Beijing", "Peking"],
+  ["Guangzhou", "Canton"],
+  ["Jakarta", "Batavia"],
+  ["Harare", "Salisbury"],
+  ["Kinshasa", "Leopoldville"],
+  ["Colombo", "Ceylon"],
+];
 
 /**
- * Given a typed query, returns any canonical city names whose old/alias
- * name starts with (or contains) the query — so partial typing of an old
- * name ("Dnepr...") still surfaces the modern city ("Dnipro").
+ * Given a typed query, returns every alternate name for any city whose
+ * name group contains a match for that query (prefix or substring) —
+ * so partial typing of any known name/spelling surfaces all the others
+ * to also search for.
  */
-export function resolveAliasMatches(query: string): string[] {
+export function resolveAlternateNames(query: string): string[] {
   const q = query.trim().toLowerCase();
   if (q.length < 3) return [];
 
   const matches = new Set<string>();
-  for (const [alias, canonical] of Object.entries(CITY_ALIASES)) {
-    const normalizedAlias = alias.replace(/_/g, " ");
-    if (normalizedAlias.startsWith(q) || normalizedAlias.includes(q)) {
-      matches.add(canonical);
+  for (const group of CITY_NAME_GROUPS) {
+    const hasMatch = group.some((name) => {
+      const n = name.toLowerCase();
+      return n.startsWith(q) || n.includes(q);
+    });
+    if (hasMatch) {
+      group.forEach((name) => matches.add(name));
     }
   }
   return [...matches];
