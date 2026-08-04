@@ -12,6 +12,8 @@ export async function submitQuiz(formData: FormData) {
   const birthDate = String(formData.get("birthDate") ?? "").trim();
   const birthTime = String(formData.get("birthTime") ?? "").trim();
   const birthLocation = String(formData.get("birthLocation") ?? "").trim();
+  const lat = String(formData.get("lat") ?? "").trim();
+  const lng = String(formData.get("lng") ?? "").trim();
   const gender = String(formData.get("gender") ?? "female") as "male" | "female";
   const utcOffset = Number(formData.get("utcOffset") ?? -5);
   const focus = String(formData.get("focus") ?? "") as FocusArea;
@@ -45,6 +47,8 @@ export async function submitQuiz(formData: FormData) {
     birthTime: request.birthTime ?? "",
     gender: request.gender,
     utcOffset: String(request.utcOffset),
+    lat,
+    lng,
   });
   redirect(`/thank-you?${params.toString()}`);
 }

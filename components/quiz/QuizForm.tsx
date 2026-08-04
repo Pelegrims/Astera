@@ -35,6 +35,8 @@ interface FormValues {
   birthTime: string;
   birthLocation: string;
   timezone: string | null;
+  lat: number | null;
+  lng: number | null;
   gender: "male" | "female";
   focus: FocusArea | "";
   consent: boolean;
@@ -49,6 +51,8 @@ const initialValues: FormValues = {
   birthTime: "",
   birthLocation: "",
   timezone: null,
+  lat: null,
+  lng: null,
   gender: "female",
   focus: "",
   consent: false,
@@ -175,6 +179,8 @@ export function QuizForm() {
               onSelect={(label, match) => {
                 update("birthLocation", label);
                 update("timezone", match?.timezone ?? null);
+                update("lat", match?.lat ?? null);
+                update("lng", match?.lng ?? null);
               }}
               inputClassName={inputClass}
             />
@@ -341,6 +347,8 @@ export function QuizForm() {
               name="birthLocation"
               value={values.birthLocation}
             />
+            <input type="hidden" name="lat" value={values.lat ?? ""} />
+            <input type="hidden" name="lng" value={values.lng ?? ""} />
             <input type="hidden" name="gender" value={values.gender} />
             <input
               type="hidden"

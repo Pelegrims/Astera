@@ -13,6 +13,8 @@ export default function ThankYouPage({
     birthTime?: string;
     gender?: string;
     utcOffset?: string;
+    lat?: string;
+    lng?: string;
   };
 }) {
   // Support both the new params and the old ?name= link, so anything
@@ -54,6 +56,8 @@ export default function ThankYouPage({
             birthTime={searchParams.birthTime || undefined}
             gender={searchParams.gender as "male" | "female"}
             utcOffset={Number(searchParams.utcOffset ?? -5)}
+            lat={searchParams.lat ? Number(searchParams.lat) : undefined}
+            lng={searchParams.lng ? Number(searchParams.lng) : undefined}
           />
         </Container>
       )}
