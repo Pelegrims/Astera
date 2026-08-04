@@ -192,3 +192,28 @@ Vercel.
 `lib/mock-data.ts` is no longer used by the live app — it's kept only as a
 reference for the exact shape of a request record. The admin dashboard and
 Thank You page will now show real, persistent submissions.
+
+## Setting up Paddle checkout ("Get my extended reading")
+
+The upsell button after the free BaZi preview opens a real Paddle checkout
+overlay via `@paddle/paddle-js` (see `components/ui/PaddleCheckoutButton.tsx`).
+
+**One-time setup, per environment (sandbox first, then live later):**
+
+1. In Paddle, go to **Developer tools → Authentication** and create a
+   client-side token (starts with `test_` in sandbox, `live_` in production).
+2. In Paddle, go to **Catalog → Products**, open (or create) the Extended
+   Reading product, and copy its Price ID (starts with `pri_`).
+3. In Paddle, go to **Checkout → Checkout settings** and set a default
+   payment link (your site's URL) — checkout will fail with "Something
+   went wrong" without this.
+4. In Vercel → Settings → Environment Variables, add:
+   - `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` — the token from step 1
+   - `NEXT_PUBLIC_PADDLE_PRICE_ID` — the price ID from step 2
+   - `NEXT_PUBLIC_PADDLE_ENVIRONMENT` — `sandbox` for now
+5. Redeploy.
+
+**Going live later:** repeat steps 1–2 in your live Paddle account (not
+sandbox), update the three env vars in Vercel with the new `live_` token,
+new price ID, and `NEXT_PUBLIC_PADDLE_ENVIRONMENT=production`, then redeploy.
+No code changes needed — this is purely a config swap.

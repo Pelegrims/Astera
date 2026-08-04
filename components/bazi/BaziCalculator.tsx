@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { calculateBazi } from "@/lib/bazi";
+import { offsetForDate } from "@/lib/city-timezone";
 import { BaziInput, BaziResult } from "@/lib/bazi-types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { CityAutocomplete } from "@/components/ui/CityAutocomplete";
 import { BaziChart } from "@/components/bazi/BaziChart";
-
-const UTC_OFFSETS = Array.from({ length: 27 }, (_, i) => i - 12); // -12 to +14
 
 const inputClass =
   "w-full rounded-xl2 border border-stone/40 bg-white/60 px-4 py-3 text-base text-ink outline-none focus:border-burgundy/60 focus:bg-white";
@@ -21,7 +21,8 @@ export function BaziCalculator() {
   const [hour, setHour] = useState("12");
   const [minute, setMinute] = useState("0");
   const [timeUnknown, setTimeUnknown] = useState(false);
-  const [utcOffset, setUtcOffset] = useState("-5");
+  const [birthCity, setBirthCity] = useState("");
+  const [timezone, setTimezone] = useState<string | null>(null);
   const [result, setResult] = useState<BaziResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -39,21 +40,38 @@ export function BaziCalculator() {
     e.preventDefault();
     setError(null);
 
+    if (!year || !month || !day) {
+      setError("Please fill in your full birth date.");
+      return;
+    }
+    if (!timezone) {
+      setError(
+        "Please pick your birth city from the suggestions so we can resolve the correct time zone."
+      );
+      return;
+    }
+
+    const h = timeUnknown ? 12 : Number(hour);
+    const m = timeUnknown ? 0 : Number(minute);
+    const utcOffset = offsetForDate(
+      timezone,
+      Number(year),
+      Number(month),
+      Number(day),
+      h,
+      m
+    );
+
     const input: BaziInput = {
       name: name.trim() || "Your",
       gender,
       year: Number(year),
       month: Number(month),
       day: Number(day),
-      hour: timeUnknown ? 12 : Number(hour),
-      minute: timeUnknown ? 0 : Number(minute),
-      utcOffset: Number(utcOffset),
+      hour: h,
+      minute: m,
+      utcOffset,
     };
-
-    if (!input.year || !input.month || !input.day) {
-      setError("Please fill in your full birth date.");
-      return;
-    }
 
     setIsCalculating(true);
     setResult(null);
@@ -204,23 +222,20 @@ export function BaziCalculator() {
 
           <div>
             <label className="mb-2 block text-sm font-medium text-ink">
-              Birth time zone (UTC offset)
+              Birth city
             </label>
-            <select
-              value={utcOffset}
-              onChange={(e) => setUtcOffset(e.target.value)}
-              className={inputClass}
-            >
-              {UTC_OFFSETS.map((o) => (
-                <option key={o} value={o}>
-                  UTC{o >= 0 ? "+" : ""}
-                  {o}
-                </option>
-              ))}
-            </select>
+            <CityAutocomplete
+              value={birthCity}
+              onSelect={(label, tz) => {
+                setBirthCity(label);
+                setTimezone(tz);
+              }}
+              inputClassName={inputClass}
+            />
             <p className="mt-1 text-xs text-ink-faint">
-              Use the time zone in effect at your birth location and date
-              (accounting for daylight saving, if any).
+              {timezone
+                ? `Time zone resolved: ${timezone}`
+                : "Start typing and pick your city from the list — we'll work out the correct time zone for your exact birth date automatically."}
             </p>
           </div>
 

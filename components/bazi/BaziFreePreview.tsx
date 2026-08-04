@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { calculateBazi } from "@/lib/bazi";
 import { ElementSpotlight } from "@/components/bazi/ElementSpotlight";
-import { LinkButton } from "@/components/ui/Button";
+import { PaddleCheckoutButton } from "@/components/ui/PaddleCheckoutButton";
 
 export function BaziFreePreview({
   firstName,
@@ -77,9 +77,7 @@ export function BaziFreePreview({
           <span className="font-display text-2xl text-burgundy">$29.99</span>
         </p>
         <div className="mt-5 flex justify-center">
-          <LinkButton href="mailto:hello@astera.app?subject=Extended%20Reading%20request">
-            Get my extended reading
-          </LinkButton>
+          <PaddleCheckoutButton>Get my extended reading</PaddleCheckoutButton>
         </div>
       </div>
     </div>

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { submitQuiz } from "@/app/actions";
 import { Button } from "@/components/ui/Button";
+import { CityAutocomplete } from "@/components/ui/CityAutocomplete";
+import { offsetForDate } from "@/lib/city-timezone";
 import { FOCUS_LABELS, FocusArea } from "@/lib/types";
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
@@ -32,8 +34,8 @@ interface FormValues {
   birthTimeKnown: boolean;
   birthTime: string;
   birthLocation: string;
+  timezone: string | null;
   gender: "male" | "female";
-  utcOffset: string;
   focus: FocusArea | "";
   consent: boolean;
 }
@@ -46,13 +48,11 @@ const initialValues: FormValues = {
   birthTimeKnown: true,
   birthTime: "",
   birthLocation: "",
+  timezone: null,
   gender: "female",
-  utcOffset: "-5",
   focus: "",
   consent: false,
 };
-
-const UTC_OFFSETS = Array.from({ length: 27 }, (_, i) => i - 12); // -12 to +14
 
 const focusOptions: { value: FocusArea; label: string; helper: string }[] = [
   { value: "love", label: FOCUS_LABELS.love, helper: "Patterns in how you connect and attach." },
@@ -73,7 +73,7 @@ export function QuizForm() {
   const steps: StepDef[] = [
     {
       key: "name",
-      eyebrow: "1 of 7 · Getting started",
+      eyebrow: "1 of 6 · Getting started",
       title: "What should we call you?",
       helper: "Your report is written to you, personally — not a template.",
       isValid: (d) => d.firstName.trim().length > 0,
@@ -90,7 +90,7 @@ export function QuizForm() {
     },
     {
       key: "contact",
-      eyebrow: "2 of 7 · Where to send it",
+      eyebrow: "2 of 6 · Where to send it",
       title: "Where should your report go?",
       helper: "We'll email a private link the moment it's ready. Phone is optional, only used if we need to reach you about your reading.",
       isValid: (d) => /\S+@\S+\.\S+/.test(d.email),
@@ -116,7 +116,7 @@ export function QuizForm() {
     },
     {
       key: "birthDate",
-      eyebrow: "3 of 7 · Your chart",
+      eyebrow: "3 of 6 · Your chart",
       title: "When were you born?",
       helper: "Your birth date sets the position of every planet in your chart — it's the foundation everything else is read from.",
       isValid: (d) => d.birthDate.trim().length > 0,
@@ -132,7 +132,7 @@ export function QuizForm() {
     },
     {
       key: "birthTime",
-      eyebrow: "4 of 7 · Precision",
+      eyebrow: "4 of 6 · Precision",
       title: "What time were you born?",
       helper: "Birth time determines your rising sign and house placements. Check your birth certificate if you have it — an estimate is fine if you don't.",
       isValid: () => true,
@@ -162,32 +162,35 @@ export function QuizForm() {
       ),
     },
     {
-      key: "birthLocation",
-      eyebrow: "5 of 7 · Your chart",
+      key: "cityAndGender",
+      eyebrow: "5 of 6 · Your chart",
       title: "Where were you born?",
-      helper: "City and state (or country) is enough. Location fixes your chart to a specific place on Earth, which is what shapes your rising sign.",
-      isValid: (d) => d.birthLocation.trim().length > 0,
-      render: () => (
-        <input
-          autoFocus
-          type="text"
-          value={values.birthLocation}
-          onChange={(e) => update("birthLocation", e.target.value)}
-          placeholder="City, State/Country"
-          className={inputClass}
-        />
-      ),
-    },
-    {
-      key: "genderTimezone",
-      eyebrow: "6 of 7 · A couple more details",
-      title: "A little more about you",
-      helper: "These help us calculate some of the finer details in your chart accurately.",
-      isValid: () => true,
+      helper: "Start typing and pick your city from the list — we'll work out your time zone automatically, no need to look it up yourself.",
+      isValid: (d) => d.birthLocation.trim().length > 0 && d.timezone !== null,
       render: () => (
         <div className="flex flex-col gap-5">
           <div>
+            <CityAutocomplete
+              value={values.birthLocation}
+              onSelect={(label, tz) => {
+                update("birthLocation", label);
+                update("timezone", tz);
+              }}
+              inputClassName={inputClass}
+            />
+            <p className="mt-1 text-xs text-ink-faint">
+              {values.timezone
+                ? `Time zone resolved: ${values.timezone}`
+                : "Pick a city from the suggestions to continue."}
+            </p>
+          </div>
+          <div>
             <p className="mb-2 text-sm font-medium text-ink">Gender</p>
+            <p className="mb-2 text-xs text-ink-faint">
+              BaZi&apos;s luck-cycle calculation is gender-specific — this is
+              a property of the traditional method itself, not a comment on
+              identity.
+            </p>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -213,32 +216,12 @@ export function QuizForm() {
               </button>
             </div>
           </div>
-          <div>
-            <p className="mb-2 text-sm font-medium text-ink">
-              Birth time zone
-            </p>
-            <select
-              value={values.utcOffset}
-              onChange={(e) => update("utcOffset", e.target.value)}
-              className={inputClass}
-            >
-              {UTC_OFFSETS.map((o) => (
-                <option key={o} value={o}>
-                  UTC{o >= 0 ? "+" : ""}
-                  {o}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-ink-faint">
-              The time zone in effect at your birth location and date.
-            </p>
-          </div>
         </div>
       ),
     },
     {
       key: "focus",
-      eyebrow: "7 of 7 · Almost there",
+      eyebrow: "6 of 6 · Almost there",
       title: "What's on your mind most right now?",
       helper: "Your astrologer will write your report toward this — the rest of your chart is read in support of it.",
       isValid: (d) => d.focus !== "",
@@ -276,6 +259,19 @@ export function QuizForm() {
   function handleBack() {
     setStep((s) => Math.max(s - 1, 0));
   }
+
+  // Computed once here (not stored in state) from the resolved timezone +
+  // birth date/time, so the person never has to pick a UTC offset by hand.
+  const resolvedUtcOffset =
+    values.timezone && values.birthDate
+      ? (() => {
+          const [y, mo, d] = values.birthDate.split("-").map(Number);
+          const [h, mi] = values.birthTimeKnown && values.birthTime
+            ? values.birthTime.split(":").map(Number)
+            : [12, 0];
+          return offsetForDate(values.timezone, y, mo, d, h, mi);
+        })()
+      : -5;
 
   return (
     <div>
@@ -346,7 +342,11 @@ export function QuizForm() {
               value={values.birthLocation}
             />
             <input type="hidden" name="gender" value={values.gender} />
-            <input type="hidden" name="utcOffset" value={values.utcOffset} />
+            <input
+              type="hidden"
+              name="utcOffset"
+              value={String(resolvedUtcOffset)}
+            />
             <input type="hidden" name="focus" value={values.focus} />
             {values.consent && <input type="hidden" name="consent" value="on" />}
             <SubmitButton disabled={!canAdvance || !values.consent} />
