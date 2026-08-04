@@ -1,5 +1,6 @@
 import cityTimezones from "city-timezones";
 import { DateTime } from "luxon";
+import { resolveAliasMatches } from "./city-aliases";
 
 export interface CityMatch {
   label: string; // "New York, New York, United States of America"
@@ -12,14 +13,31 @@ export interface CityMatch {
  * Searches city-timezones' built-in dataset (~7000 world cities). The
  * library itself supports partial matches on city, province, or country,
  * so a live-typed query like "new yo" already works without us building
- * our own fuzzy search.
+ * our own fuzzy search. Also checks known historical/renamed city names
+ * (see city-aliases.ts) — so typing an old name like "Dnepropetrovsk"
+ * still finds the modern "Dnipro".
  */
 export function searchCities(query: string): CityMatch[] {
   const trimmed = query.trim();
   if (trimmed.length < 1) return [];
 
-  const results = cityTimezones.lookupViaCity(trimmed);
-  const sorted = [...results].sort(
+  const direct = cityTimezones.lookupViaCity(trimmed);
+
+  const aliasCanonicalNames = resolveAliasMatches(trimmed);
+  const aliasResults = aliasCanonicalNames.flatMap((name) =>
+    cityTimezones.lookupViaCity(name)
+  );
+
+  // Merge and de-duplicate (same city can appear via both paths).
+  const seen = new Set<string>();
+  const merged = [...direct, ...aliasResults].filter((r: any) => {
+    const key = `${r.city}|${r.province}|${r.country}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const sorted = merged.sort(
     (a: any, b: any) => (b.pop ?? 0) - (a.pop ?? 0)
   );
 

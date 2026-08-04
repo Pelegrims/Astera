@@ -20,9 +20,9 @@ const ELEMENT_INFO: Record<
     blurb:
       "you're in a season built for growth — planning ahead pays off more than reacting in the moment.",
     icon: WoodIcon,
-    textColor: "text-sage",
-    bgColor: "bg-sage/12",
-    ringColor: "border-sage/40",
+    textColor: "text-elementWood",
+    bgColor: "bg-elementWood/12",
+    ringColor: "border-elementWood/40",
   },
   fire: {
     label: "Fire",
@@ -30,9 +30,9 @@ const ELEMENT_INFO: Record<
     blurb:
       "you have real pull toward visibility right now — this is a good season to be seen and heard.",
     icon: FireIcon,
-    textColor: "text-burgundy",
-    bgColor: "bg-burgundy/10",
-    ringColor: "border-burgundy/40",
+    textColor: "text-elementFire",
+    bgColor: "bg-elementFire/10",
+    ringColor: "border-elementFire/40",
   },
   earth: {
     label: "Earth",
@@ -40,9 +40,9 @@ const ELEMENT_INFO: Record<
     blurb:
       "groundedness and trust are close at hand — steady relationships and routines serve you especially well now.",
     icon: EarthIcon,
-    textColor: "text-mauve",
-    bgColor: "bg-mauve/12",
-    ringColor: "border-mauve/40",
+    textColor: "text-elementEarth",
+    bgColor: "bg-elementEarth/12",
+    ringColor: "border-elementEarth/40",
   },
   metal: {
     label: "Metal",
@@ -50,9 +50,9 @@ const ELEMENT_INFO: Record<
     blurb:
       "there's a strong pull toward self-expression right now — creative or personal work wants your attention.",
     icon: MetalIcon,
-    textColor: "text-stone",
-    bgColor: "bg-stone/15",
-    ringColor: "border-stone/40",
+    textColor: "text-elementMetal",
+    bgColor: "bg-elementMetal/15",
+    ringColor: "border-elementMetal/40",
   },
   water: {
     label: "Water",
@@ -60,9 +60,9 @@ const ELEMENT_INFO: Record<
     blurb:
       "resources and money matters are highlighted — a good season to think clearly about what you're building toward.",
     icon: WaterIcon,
-    textColor: "text-aubergine",
-    bgColor: "bg-aubergine/10",
-    ringColor: "border-aubergine/40",
+    textColor: "text-elementWater",
+    bgColor: "bg-elementWater/10",
+    ringColor: "border-elementWater/40",
   },
 };
 

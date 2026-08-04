@@ -35,6 +35,14 @@ const config: Config = {
         stone: "#B7B2AA", // Cool Stone — neutral weight
         mauve: "#A38D8C", // Mauve Taupe — warm secondary accent
         sage: "#A8ADA0", // Silver Sage — cool secondary accent
+        // Traditional Wu Xing element colors — used specifically for the
+        // Five Element displays so Wood/Fire/Earth/Metal/Water read
+        // instantly by color, not just by icon/label.
+        elementWood: "#4F7A5B",
+        elementFire: "#B3392E",
+        elementEarth: "#8B6B48",
+        elementMetal: "#9498A0",
+        elementWater: "#356387",
         petal: "#F2E2E0", // Petal Pink — soft warm tint
         line: "rgba(43, 34, 48, 0.10)",
       },
