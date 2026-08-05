@@ -5,6 +5,7 @@ import {
   BaziResult,
   FiveElementsBalance,
   SolarTimeMoment,
+  PeriodResult,
   TransitResult,
 } from "./bazi-types";
 import {
@@ -416,6 +417,131 @@ export function calculateBazi(input: BaziInput): BaziResult {
   };
 }
 
+
+/**
+ * Month stem by the Five Tigers rule (五虎遁): the year stem fixes the
+ * stem of the 寅 month, and stems then run in order through the branches.
+ * Verified against the reference calculator: year 丙 + month 寅 → 庚寅
+ * (exactly the transit column in the screenshot), and natal checks:
+ * year 己 + month 巳 → 己巳, year 甲 + month 申 → 壬申.
+ */
+const FIVE_TIGERS_BASE: Record<string, string> = {
+  "甲": "丙", "己": "丙",
+  "乙": "戊", "庚": "戊",
+  "丙": "庚", "辛": "庚",
+  "丁": "壬", "壬": "壬",
+  "戊": "甲", "癸": "甲",
+};
+
+export function monthPillarFor(
+  yearStem: string,
+  monthBranch: string
+): { stem: string; branch: string } | null {
+  const base = FIVE_TIGERS_BASE[yearStem];
+  const baseIdx = STEM_ORDER.indexOf(base ?? "");
+  const branchIdx = BRANCH_ORDER.indexOf(monthBranch);
+  const yinIdx = BRANCH_ORDER.indexOf("寅");
+  if (baseIdx < 0 || branchIdx < 0) return null;
+  const steps = (branchIdx - yinIdx + 12) % 12;
+  return { stem: STEM_ORDER[(baseIdx + steps) % 10], branch: monthBranch };
+}
+
+/** Shared annotation for transit/period pillars: everything read vs the natal Day Master. */
+function annotatePillar(
+  dm: string,
+  label: string,
+  stem: string,
+  branch: string,
+  hiddenStems: string[]
+): BaziPillar {
+  return {
+    label,
+    stem,
+    branch,
+    hiddenStems,
+    hiddenTenGods: hiddenStems.map((h) => tenGodOf(dm, h)),
+    tenGodStem: tenGodOf(dm, stem),
+    element: elementOfStem(stem),
+    stemYinYang: YANG_STEMS.has(stem) ? "Yang" : "Yin",
+    branchElement: BRANCH_ELEMENT[branch] ?? "",
+    branchAnimal: BRANCH_ANIMAL[branch] ?? "",
+    qiPhase: qiPhaseOf(dm, branch) || undefined,
+  };
+}
+
+/**
+ * Period-level reading — exactly the reference calculator's two-dropdown
+ * mode: pick a YEAR (and optionally a BaZi MONTH by its branch) and see
+ * those pillars beside the active luck cycle, no day or hour involved.
+ * Pure table math end to end: yearGanZhi + Five Tigers + the shared
+ * annotation, so it needs no astronomical engine at all.
+ */
+export function calculatePeriodPillars(input: {
+  year: number;
+  monthBranch?: string | null;
+  natal: BaziResult;
+}): PeriodResult {
+  const { year, monthBranch, natal } = input;
+  const dm = natal.dayMaster.stem;
+
+  const yz = yearGanZhi(year);
+  const yearPillar = annotatePillar(
+    dm,
+    "Year",
+    yz.stem,
+    yz.branch,
+    HIDDEN_STEMS[yz.branch] ?? []
+  );
+
+  const mp = monthBranch ? monthPillarFor(yz.stem, monthBranch) : null;
+  const monthPillar = mp
+    ? annotatePillar(dm, "Month", mp.stem, mp.branch, HIDDEN_STEMS[mp.branch] ?? [])
+    : null;
+
+  const activeLuck = activeLuckPillar(natal.luckPillars ?? [], year);
+  const nextLuck = activeLuck
+    ? (natal.luckPillars ?? []).find((p) => p.startYear > activeLuck.startYear)
+    : null;
+  const luck = activeLuck
+    ? {
+        pillar: annotatePillar(
+          dm,
+          "Luck",
+          activeLuck.stem,
+          activeLuck.branch,
+          HIDDEN_STEMS[activeLuck.branch] ?? []
+        ),
+        startAge: activeLuck.startAge,
+        startYear: activeLuck.startYear,
+        endYear: nextLuck ? nextLuck.startYear - 1 : activeLuck.startYear + 9,
+      }
+    : null;
+
+  const hits: StarHit[] = [];
+  const scan: { key: PillarKey; branch: string }[] = [
+    { key: "year", branch: yearPillar.branch },
+  ];
+  if (monthPillar) scan.push({ key: "month", branch: monthPillar.branch });
+  if (luck) scan.push({ key: "luck", branch: luck.pillar.branch });
+  for (const { key, branch } of scan) {
+    for (const st of natal.stars.summary) {
+      for (const t of st.targets) {
+        if (t.branches.includes(branch)) {
+          hits.push({
+            pillar: key,
+            name: st.name,
+            chinese: st.chinese,
+            category: st.category,
+            anchor: t.anchor,
+          });
+        }
+      }
+    }
+  }
+
+  return { year: yearPillar, month: monthPillar, luck, hits };
+}
+
 /**
  * The pillars of an arbitrary moment — "current energies": the selected
  * year / month / day / hour rendered exactly like the natal pillars, but
@@ -449,28 +575,15 @@ export function calculateTransitPillars(input: {
   const solar = Solar.fromYmdHms(t.year, t.month, t.day, t.hour, t.minute, 0);
   const eightChar = solar.getLunar().getEightChar();
 
-  function buildTransitPillar(
+  // Unlike the natal day pillar, the transit day stem is NOT the person —
+  // it gets a real Ten God relative to the natal Day Master, which is
+  // exactly what the shared annotator does.
+  const buildTransitPillar = (
     label: string,
     stem: string,
     branch: string,
     hiddenStems: string[]
-  ): BaziPillar {
-    return {
-      label,
-      stem,
-      branch,
-      hiddenStems,
-      hiddenTenGods: hiddenStems.map((h) => tenGodOf(dm, h)),
-      // Unlike the natal day pillar, the transit day stem is NOT the
-      // person — it gets a real Ten God relative to the natal Day Master.
-      tenGodStem: tenGodOf(dm, stem),
-      element: elementOfStem(stem),
-      stemYinYang: YANG_STEMS.has(stem) ? "Yang" : "Yin",
-      branchElement: BRANCH_ELEMENT[branch] ?? "",
-      branchAnimal: BRANCH_ANIMAL[branch] ?? "",
-      qiPhase: qiPhaseOf(dm, branch) || undefined,
-    };
-  }
+  ): BaziPillar => annotatePillar(dm, label, stem, branch, hiddenStems);
 
   const pillars = {
     year: buildTransitPillar(

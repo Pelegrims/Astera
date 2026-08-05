@@ -1,5 +1,17 @@
 import { BaziStars, StarHit } from "./bazi-stars";
 
+export interface PeriodResult {
+  year: BaziPillar;
+  month: BaziPillar | null;
+  luck: {
+    pillar: BaziPillar;
+    startAge: number;
+    startYear: number;
+    endYear: number;
+  } | null;
+  hits: StarHit[];
+}
+
 export interface TransitResult {
   pillars: {
     year: BaziPillar;
