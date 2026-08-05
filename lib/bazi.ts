@@ -6,6 +6,7 @@ import {
   FiveElementsBalance,
   SolarTimeMoment,
 } from "./bazi-types";
+import { computeBaziStars, computeVoidBranches } from "./bazi-stars";
 
 /**
  * This wraps `lunar-javascript` (MIT licensed, https://github.com/6tail/lunar-javascript),
@@ -24,7 +25,7 @@ import {
  * right, but exact method names can shift between library versions.
  */
 
-const STEM_ELEMENT: Record<string, string> = {
+export const STEM_ELEMENT: Record<string, string> = {
   "甲": "Wood", "乙": "Wood",
   "丙": "Fire", "丁": "Fire",
   "戊": "Earth", "己": "Earth",
@@ -52,6 +53,52 @@ function translateTenGod(chinese: string): string {
 
 function elementOfStem(stem: string): string {
   return STEM_ELEMENT[stem] ?? stem;
+}
+
+const YANG_STEMS = new Set(["甲", "丙", "戊", "庚", "壬"]);
+
+const BRANCH_ELEMENT: Record<string, string> = {
+  "子": "Water", "丑": "Earth", "寅": "Wood", "卯": "Wood",
+  "辰": "Earth", "巳": "Fire", "午": "Fire", "未": "Earth",
+  "申": "Metal", "酉": "Metal", "戌": "Earth", "亥": "Water",
+};
+
+export const BRANCH_ANIMAL: Record<string, string> = {
+  "子": "Rat", "丑": "Ox", "寅": "Tiger", "卯": "Rabbit",
+  "辰": "Dragon", "巳": "Snake", "午": "Horse", "未": "Goat",
+  "申": "Monkey", "酉": "Rooster", "戌": "Dog", "亥": "Pig",
+};
+
+/** 长生十二神 — the 12 Qi phases of the Day Master through the branches */
+const QI_PHASE_EN: Record<string, string> = {
+  "长生": "Birth",
+  "沐浴": "Bath",
+  "冠带": "Dressing",
+  "临官": "Coming of Age",
+  "帝旺": "Peak",
+  "衰": "Decline",
+  "病": "Illness",
+  "死": "Death",
+  "墓": "Tomb",
+  "绝": "Severing",
+  "胎": "Conception",
+  "养": "Nurturing",
+};
+
+/**
+ * Calls a method on the lunar-javascript object only if it exists, and
+ * never lets it throw — the deeper chart layers (Qi phases, hidden-stem
+ * Ten Gods) come from parts of the EightChar API we haven't been able to
+ * execute in this environment. If a method name shifted between library
+ * versions, the chart simply renders without that one layer instead of
+ * crashing the whole calculator.
+ */
+function safeCall(obj: any, method: string): any {
+  try {
+    return typeof obj?.[method] === "function" ? obj[method]() : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -128,15 +175,28 @@ export function calculateBazi(input: BaziInput): BaziResult {
     stem: string,
     branch: string,
     hiddenStems: string[],
-    tenGodStem: string
+    tenGodStem: string,
+    hiddenTenGodsRaw: unknown,
+    qiPhaseRaw: unknown
   ): BaziPillar {
+    const hiddenTenGods = Array.isArray(hiddenTenGodsRaw)
+      ? hiddenTenGodsRaw.map((g) => translateTenGod(String(g)))
+      : [];
     return {
       label,
       stem,
       branch,
       hiddenStems,
+      hiddenTenGods,
       tenGodStem: translateTenGod(tenGodStem),
       element: elementOfStem(stem),
+      stemYinYang: YANG_STEMS.has(stem) ? "Yang" : "Yin",
+      branchElement: BRANCH_ELEMENT[branch] ?? "",
+      branchAnimal: BRANCH_ANIMAL[branch] ?? "",
+      qiPhase:
+        typeof qiPhaseRaw === "string" && qiPhaseRaw
+          ? QI_PHASE_EN[qiPhaseRaw] ?? qiPhaseRaw
+          : undefined,
     };
   }
 
@@ -145,28 +205,36 @@ export function calculateBazi(input: BaziInput): BaziResult {
     eightChar.getYearGan(),
     eightChar.getYearZhi(),
     eightChar.getYearHideGan(),
-    eightChar.getYearShiShenGan()
+    eightChar.getYearShiShenGan(),
+    safeCall(eightChar, "getYearShiShenZhi"),
+    safeCall(eightChar, "getYearDiShi")
   );
   const monthPillar = buildPillar(
     "Month",
     eightChar.getMonthGan(),
     eightChar.getMonthZhi(),
     eightChar.getMonthHideGan(),
-    eightChar.getMonthShiShenGan()
+    eightChar.getMonthShiShenGan(),
+    safeCall(eightChar, "getMonthShiShenZhi"),
+    safeCall(eightChar, "getMonthDiShi")
   );
   const dayPillar = buildPillar(
     "Day",
     eightChar.getDayGan(),
     eightChar.getDayZhi(),
     eightChar.getDayHideGan(),
-    "Day Master" // the day stem IS the Day Master — no ten-god relationship to itself
+    "Day Master", // the day stem IS the Day Master — no ten-god relationship to itself
+    safeCall(eightChar, "getDayShiShenZhi"),
+    safeCall(eightChar, "getDayDiShi")
   );
   const hourPillar = buildPillar(
     "Hour",
     eightChar.getTimeGan(),
     eightChar.getTimeZhi(),
     eightChar.getTimeHideGan(),
-    eightChar.getTimeShiShenGan()
+    eightChar.getTimeShiShenGan(),
+    safeCall(eightChar, "getTimeShiShenZhi"),
+    safeCall(eightChar, "getTimeDiShi")
   );
 
   const dayMasterStem = eightChar.getDayGan();
@@ -204,11 +272,34 @@ export function calculateBazi(input: BaziInput): BaziResult {
   const daYunList = yun.getDaYun(); // typically returns ~10 pillars including the "before luck starts" one
   const luckPillars = daYunList
     .filter((d: any) => typeof d.getGanZhi === "function" && d.getGanZhi())
-    .map((d: any) => ({
-      startAge: d.getStartAge(),
-      startYear: d.getStartYear(),
-      ganZhi: d.getGanZhi(),
-    }));
+    .map((d: any) => {
+      const ganZhi = String(d.getGanZhi());
+      const chars = Array.from(ganZhi);
+      const stem = chars[0] ?? "";
+      const branch = chars[1] ?? "";
+      return {
+        startAge: d.getStartAge(),
+        startYear: d.getStartYear(),
+        ganZhi,
+        stem,
+        branch,
+        stemElement: elementOfStem(stem),
+        branchAnimal: BRANCH_ANIMAL[branch] ?? "",
+      };
+    });
+
+  // Symbolic stars (deities / spirits & demons) + Void — pure classical
+  // table lookups, verified against the reference calculator's rendered
+  // side panel (see lib/bazi-stars.ts).
+  const stars = computeBaziStars({
+    yearStem: yearPillar.stem,
+    yearBranch: yearPillar.branch,
+    monthBranch: monthPillar.branch,
+    dayStem: dayPillar.stem,
+    dayBranch: dayPillar.branch,
+    hourBranch: hourPillar.branch,
+  });
+  const voidBranches = computeVoidBranches(dayPillar.stem, dayPillar.branch);
 
   return {
     pillars: {
@@ -220,10 +311,13 @@ export function calculateBazi(input: BaziInput): BaziResult {
     dayMaster: {
       stem: dayMasterStem,
       element: elementOfStem(dayMasterStem),
+      yinYang: YANG_STEMS.has(dayMasterStem) ? "Yang" : "Yin",
     },
     fiveElements,
     luckPillars,
     luckStartAge: yun.getStartYear ? yun.getStartYear() : 0,
+    stars,
+    voidBranches,
     solarTime: solarMoment,
   };
 }

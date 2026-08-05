@@ -1,10 +1,19 @@
+import { BaziStars } from "./bazi-stars";
+
 export interface BaziPillar {
   label: string; // "Hour" | "Day" | "Month" | "Year"
   stem: string; // Heavenly Stem, e.g. "庚"
   branch: string; // Earthly Branch, e.g. "午"
   hiddenStems: string[]; // stems hidden within the branch
+  /** Ten God of each hidden stem, aligned by index with hiddenStems */
+  hiddenTenGods: string[];
   tenGodStem: string; // Ten God relationship of the stem to the Day Master
   element: string; // element of the stem, e.g. "Metal"
+  stemYinYang: "Yin" | "Yang";
+  branchElement: string; // element of the branch, e.g. "Fire" for 巳
+  branchAnimal: string; // e.g. "Snake" for 巳
+  /** 12-stage Qi phase (长生十二神) of the Day Master at this branch, e.g. "Peak" */
+  qiPhase?: string;
 }
 
 export interface FiveElementsBalance {
@@ -19,6 +28,10 @@ export interface LuckPillar {
   startAge: number;
   startYear: number;
   ganZhi: string; // e.g. "壬申"
+  stem: string;
+  branch: string;
+  stemElement: string; // for element coloring
+  branchAnimal: string; // e.g. "Monkey"
 }
 
 export interface SolarTimeMoment {
@@ -41,10 +54,15 @@ export interface BaziResult {
   dayMaster: {
     stem: string;
     element: string;
+    yinYang: "Yin" | "Yang";
   };
   fiveElements: FiveElementsBalance;
   luckPillars: LuckPillar[];
   luckStartAge: number;
+  /** Symbolic stars — deities / spirits & demons — with per-pillar hits */
+  stars: BaziStars;
+  /** Void (空亡) branch characters of the day pillar's 10-day cycle */
+  voidBranches: string[];
   /**
    * The mean local solar time the pillars were actually computed from
    * (present when longitude was provided). Shown in the UI so results

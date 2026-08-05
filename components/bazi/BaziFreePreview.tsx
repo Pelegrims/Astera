@@ -5,6 +5,7 @@ import { calculateBazi } from "@/lib/bazi";
 import { calculateNatalChart } from "@/lib/astrology";
 import { calculateMatrix } from "@/lib/matrix-of-destiny";
 import { ElementSpotlight } from "@/components/bazi/ElementSpotlight";
+import { BaziChart } from "@/components/bazi/BaziChart";
 import { NatalChartDisplay } from "@/components/astrology/NatalChartDisplay";
 import { MatrixDisplay } from "@/components/matrix/MatrixDisplay";
 import { PaddleCheckoutButton } from "@/components/ui/PaddleCheckoutButton";
@@ -102,12 +103,20 @@ export function BaziFreePreview({
             fiveElements={baziResult.fiveElements}
             name={firstName}
           />
-          <p className="mt-4 text-center text-xs text-ink-faint">
-            Day Master: {baziResult.dayMaster.stem} (
-            {baziResult.dayMaster.element})
-          </p>
+          <div className="mt-8">
+            {/* Full classical pillar chart with the Day Master front and
+                center. Luck cycles stay out of the free preview — they're
+                part of the paid Extended Reading pitch below. */}
+            <BaziChart
+              result={baziResult}
+              name={firstName}
+              showLuckPillars={false}
+              showElements={false}
+              showCta={false}
+            />
+          </div>
           {baziResult.solarTime && (
-            <p className="mt-1 text-center text-[11px] text-ink-faint">
+            <p className="mt-4 text-center text-[11px] text-ink-faint">
               Calculated from mean solar time{" "}
               {String(baziResult.solarTime.hour).padStart(2, "0")}:
               {String(baziResult.solarTime.minute).padStart(2, "0")} at your

@@ -166,6 +166,31 @@ natal charts are computed from civil time converted to UT, which
 `circular-natal-horoscope-js` handles internally from the coordinates.
 The two systems using different time frames is correct, not a bug.
 
+### Full classical chart layout
+
+`BaziChart` now renders the complete classical picture, modeled on the
+reference calculator's layout: the **Day Master front and center** (a hero
+glyph above the table — it's the figure every other symbol is read
+against), then the four pillars in reference column order (Hour · Day ·
+Month · Year), each with its Ten God, stem, branch (with animal +
+element), **hidden stems with their own Ten Gods**, and the **Qi phase**
+(12-stage cycle) — the latter two via lunar-javascript's
+`get*ShiShenZhi()` / `get*DiShi()`, wrapped in safe calls so a missing
+method degrades to a chart without that layer instead of a crash.
+
+**Symbolic stars** (deities / spirits &amp; demons) live in
+`lib/bazi-stars.ts` — pure classical table lookups (Nobleman, Peach
+Blossom, Sky Horse, Arts Star, General Star, Golden Carriage, Academic
+Star, Heavenly Doctor, Robbery Demon, Void/空亡) anchored to the day
+stem/branch, year stem/branch, and month branch, marked (d)/(y)/(m) like
+the reference marks (д)/(г). The tables are verified in code review
+against the reference's rendered side panel for two known charts — see
+the file header. **Число Гуа (Life Gua) is deliberately not included**:
+several schools compute it differently, waiting on Julia's preferred
+formula. The free Thank-You preview shows the full pillar chart but keeps
+the 10-year luck cycles out — those stay part of the paid Extended
+Reading pitch.
+
 ## Setting up Supabase (real, persistent storage)
 
 The app now reads/writes through Supabase instead of an in-memory array —
