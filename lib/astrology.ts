@@ -1,6 +1,7 @@
 import { Origin, Horoscope } from "circular-natal-horoscope-js";
 import {
   AspectInfo,
+  HouseCusp,
   NatalChartInput,
   NatalChartResult,
   PlanetPosition,
@@ -28,6 +29,54 @@ const PLANET_KEYS = [
   "sun", "moon", "mercury", "venus", "mars",
   "jupiter", "saturn", "uranus", "neptune", "pluto",
 ];
+
+/**
+ * Sign rulerships — exactly the scheme Julia works with: the modern ruler
+ * first, then the traditional co-ruler for the three signs that have one.
+ *   Scorpio → Pluto, Mars · Aquarius → Uranus, Saturn · Pisces → Neptune, Jupiter
+ * Whatever sign sits on a house cusp, that sign's planet(s) rule the house
+ * (cusp of the 2nd in Virgo → Mercury rules the 2nd).
+ */
+const SIGN_RULERS: Record<string, string[]> = {
+  Aries: ["mars"],
+  Taurus: ["venus"],
+  Gemini: ["mercury"],
+  Cancer: ["moon"],
+  Leo: ["sun"],
+  Virgo: ["mercury"],
+  Libra: ["venus"],
+  Scorpio: ["pluto", "mars"],
+  Sagittarius: ["jupiter"],
+  Capricorn: ["saturn"],
+  Aquarius: ["uranus", "saturn"],
+  Pisces: ["neptune", "jupiter"],
+};
+
+export function rulersOfSign(sign: string): string[] {
+  return SIGN_RULERS[sign] ?? [];
+}
+
+/**
+ * Turns the 12 raw Placidus cusp longitudes into house records with the
+ * sign on each cusp (kept at 2-decimal precision so results can be
+ * checked digit-for-digit against reference calculators like astro-seek,
+ * whose default is also Placidus) and that sign's ruler(s).
+ * House 1's cusp is the Ascendant; house 10's is the Midheaven.
+ */
+export function buildHouses(houseCuspDegrees: number[]): HouseCusp[] {
+  if (houseCuspDegrees.length !== 12) return [];
+  return houseCuspDegrees.map((deg, i) => {
+    const normalized = ((deg % 360) + 360) % 360;
+    const signIndex = Math.floor(normalized / 30);
+    const sign = ZODIAC_SIGNS[signIndex];
+    return {
+      house: i + 1,
+      sign,
+      degreeInSign: Math.round((normalized % 30) * 100) / 100,
+      rulers: rulersOfSign(sign),
+    };
+  });
+}
 
 function signAndDegree(eclipticDegree: number): {
   sign: string;
@@ -101,6 +150,8 @@ export function calculateNatalChart(
     (h: any) => h?.ChartPosition?.Ecliptic?.DecimalDegrees ?? 0
   );
 
+  const houses = buildHouses(houseCuspDegrees);
+
   const planets: PlanetPosition[] = PLANET_KEYS.map((key) => {
     const body = (horoscope.CelestialBodies as any)?.[key];
     const degree = body?.ChartPosition?.Ecliptic?.DecimalDegrees ?? 0;
@@ -114,6 +165,11 @@ export function calculateNatalChart(
         ? findHouse(houseCuspDegrees, degree)
         : 1,
       retrograde: Boolean(body?.isRetrograde),
+      // The inverse view of the cusp rulerships: every house whose cusp
+      // sign this planet rules ("Mercury rules the 2nd and the 5th").
+      rulesHouses: houses
+        .filter((h) => h.rulers.includes(key))
+        .map((h) => h.house),
     };
   });
 
@@ -137,6 +193,7 @@ export function calculateNatalChart(
     ascendant: signAndDegree(ascDegree),
     midheaven: signAndDegree(mcDegree),
     planets,
+    houses,
     aspects,
   };
 }

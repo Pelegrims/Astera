@@ -279,7 +279,16 @@ entry: **Western astrology**, **BaZi**, and **Matrix of Destiny**.
 [`circular-natal-horoscope-js`](https://github.com/0xStarcat/CircularNatalHoroscopeJS)
 (Unlicense) — a real astronomical ephemeris (Moshier), not an
 approximation. Computes planet signs, exact degrees, house placement
-(Placidus system), and aspects with a 2° orb, as requested. Like the BaZi
+(Placidus system), and aspects with a 2° orb, as requested. The 12
+**Placidus house cusps** are now surfaced in the result (`houses`), each
+with the sign on the cusp (deg°min′ precision, so cusps can be compared
+digit-for-digit against astro-seek.com, whose default is also Placidus)
+and that sign's **ruling planet(s)** — Julia's scheme: modern ruler
+first, traditional co-ruler second (Scorpio → Pluto, Mars; Aquarius →
+Uranus, Saturn; Pisces → Neptune, Jupiter). Each planet also carries the
+inverse view (`rulesHouses`) — every house it rules in this specific
+chart — and the UI's houses table shows where each house's ruler itself
+sits ("2nd — Virgo 15°32′ — Mercury → H5"). Like the BaZi
 integration, **this hasn't been run end-to-end here** (no network access
 in this environment to `npm install` and test it) — before trusting it
 for real clients, run it locally and check a chart you already know the
