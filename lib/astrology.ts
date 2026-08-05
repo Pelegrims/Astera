@@ -146,11 +146,56 @@ export function calculateNatalChart(
     language: "en",
   });
 
-  const houseCuspDegrees: number[] = (horoscope.Houses ?? []).map(
-    (h: any) => h?.ChartPosition?.Ecliptic?.DecimalDegrees ?? 0
-  );
+  const ascDegree =
+    (horoscope.Ascendant as any)?.ChartPosition?.Ecliptic?.DecimalDegrees ?? 0;
+  const mcDegree =
+    (horoscope.Midheaven as any)?.ChartPosition?.Ecliptic?.DecimalDegrees ?? 0;
 
-  const houses = buildHouses(houseCuspDegrees);
+  // House cusps. In the installed version of circular-natal-horoscope-js
+  // a house object stores its span as ChartPosition.StartPosition /
+  // .EndPosition (the CUSP is the StartPosition) — unlike planets and
+  // angles, which expose ChartPosition.Ecliptic directly. Reading the
+  // planet-style path here silently produced 0 for every cusp ("all
+  // twelve houses in Aries 0°00′, everything in House 1" — the bug the
+  // first deployed version shipped with). We now try the known shapes in
+  // order and then VALIDATE: by definition the 1st-house cusp IS the
+  // Ascendant, so if they don't match (or cusps are degenerate), the
+  // houses are treated as unavailable and hidden, never shown wrong.
+  const rawHouses: any[] = (horoscope.Houses as any[]) ?? [];
+  const houseCuspDegrees: number[] = rawHouses.map((h: any) => {
+    const candidates = [
+      h?.ChartPosition?.StartPosition?.Ecliptic?.DecimalDegrees,
+      h?.ChartPosition?.Ecliptic?.DecimalDegrees,
+      h?.StartPosition?.Ecliptic?.DecimalDegrees,
+    ];
+    const v = candidates.find(
+      (c) => typeof c === "number" && Number.isFinite(c)
+    );
+    return typeof v === "number" ? v : NaN;
+  });
+
+  const ascCuspGap = Math.abs(
+    ((houseCuspDegrees[0] - ascDegree + 540) % 360) - 180
+  );
+  const cuspsValid =
+    houseCuspDegrees.length === 12 &&
+    houseCuspDegrees.every((d) => Number.isFinite(d)) &&
+    new Set(houseCuspDegrees.map((d) => Math.round(d * 10))).size > 1 &&
+    ascCuspGap < 1;
+
+  if (!cuspsValid && rawHouses.length > 0) {
+    // Surfaces the actual object shape in the browser console so a future
+    // library version with yet another structure is diagnosable from a
+    // screenshot of DevTools instead of guesswork.
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[astera] House cusps failed validation (cusp 1 must equal the Ascendant); hiding houses. First house object:",
+      rawHouses[0]
+    );
+  }
+
+  const validCusps = cuspsValid ? houseCuspDegrees : [];
+  const houses = buildHouses(validCusps);
 
   const planets: PlanetPosition[] = PLANET_KEYS.map((key) => {
     const body = (horoscope.CelestialBodies as any)?.[key];
@@ -161,9 +206,7 @@ export function calculateNatalChart(
       label: key.charAt(0).toUpperCase() + key.slice(1),
       sign,
       degreeInSign,
-      house: houseCuspDegrees.length
-        ? findHouse(houseCuspDegrees, degree)
-        : 1,
+      house: validCusps.length ? findHouse(validCusps, degree) : 1,
       retrograde: Boolean(body?.isRetrograde),
       // The inverse view of the cusp rulerships: every house whose cusp
       // sign this planet rules ("Mercury rules the 2nd and the 5th").
@@ -172,11 +215,6 @@ export function calculateNatalChart(
         .map((h) => h.house),
     };
   });
-
-  const ascDegree =
-    (horoscope.Ascendant as any)?.ChartPosition?.Ecliptic?.DecimalDegrees ?? 0;
-  const mcDegree =
-    (horoscope.Midheaven as any)?.ChartPosition?.Ecliptic?.DecimalDegrees ?? 0;
 
   const aspectsRaw: any[] = (horoscope.Aspects as any)?.all ?? [];
   const aspects: AspectInfo[] = aspectsRaw.map((a) => ({

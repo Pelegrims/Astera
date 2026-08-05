@@ -40,6 +40,10 @@ function planetLabel(key: string): string {
 }
 
 export function NatalChartDisplay({ result }: { result: NatalChartResult }) {
+  // House placements and rulerships only render when the cusps passed
+  // validation (cusp 1 == Ascendant) — otherwise every planet would
+  // falsely read "House 1", which is exactly the bug this guards against.
+  const housesValid = result.houses.length === 12;
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -69,8 +73,12 @@ export function NatalChartDisplay({ result }: { result: NatalChartResult }) {
                 {SIGN_SYMBOL[p.sign]} {p.sign} {p.degreeInSign}°
               </p>
               <p className="mt-0.5 text-[10px] text-ink-faint">
-                House {p.house}
-                {p.retrograde ? " · Rx" : ""}
+                {[
+                  housesValid ? `House ${p.house}` : null,
+                  p.retrograde ? "Rx" : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </p>
               {p.rulesHouses.length > 0 && (
                 <p className="mt-0.5 text-[9px] text-ink-faint">
