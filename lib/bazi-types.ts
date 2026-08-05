@@ -1,4 +1,16 @@
-import { BaziStars } from "./bazi-stars";
+import { BaziStars, StarHit } from "./bazi-stars";
+
+export interface TransitResult {
+  pillars: {
+    year: BaziPillar;
+    month: BaziPillar;
+    day: BaziPillar;
+    hour: BaziPillar;
+  };
+  /** Natal stars activated by the transit branches */
+  hits: StarHit[];
+  solarTime?: SolarTimeMoment;
+}
 
 export interface BaziPillar {
   label: string; // "Hour" | "Day" | "Month" | "Year"

@@ -191,6 +191,21 @@ formula. The free Thank-You preview shows the full pillar chart but keeps
 the 10-year luck cycles out — those stay part of the paid Extended
 Reading pitch.
 
+**Transit pillars ("Current Energies")** live below the natal chart on
+`/bazi`: the pillars of any selected moment — defaulting to right now in
+the birth city's clock — with year/month/day/hour dropdowns and a "Back
+to now" reset. Everything in them (Ten Gods, hidden-stem gods, Qi
+phases, activated stars) is read **relative to the natal Day Master and
+natal star anchors**, which is how classical BaZi reads transits and how
+the reference's selectable year/month columns behave. To keep natal and
+transit mathematically inseparable, the Ten God and Qi-phase logic now
+lives in pure table functions (`tenGodOf`, `qiPhaseOf` in `lib/bazi.ts`)
+shared by both paths — verified against the reference's rendered labels
+(Day Master 辛: 丙 = Direct Officer / Правильная власть, 庚 = Rob
+Wealth, phase at 午 = Illness, at 寅 = Conception). lunar-javascript now
+supplies only the ganzhi themselves, hidden-stem lists, and luck
+pillars.
+
 ## Setting up Supabase (real, persistent storage)
 
 The app now reads/writes through Supabase instead of an in-memory array —

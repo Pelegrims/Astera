@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { CityAutocomplete } from "@/components/ui/CityAutocomplete";
 import { BaziChart } from "@/components/bazi/BaziChart";
+import { TransitPillars } from "@/components/bazi/TransitPillars";
 import { NatalChartDisplay } from "@/components/astrology/NatalChartDisplay";
 import { MatrixDisplay } from "@/components/matrix/MatrixDisplay";
 
@@ -45,6 +46,7 @@ export function BaziCalculator() {
     utcOffset: number;
     lng: number;
     clock: string;
+    timezone: string;
   } | null>(null);
   const [natalResult, setNatalResult] = useState<NatalChartResult | null>(
     null
@@ -119,6 +121,7 @@ export function BaziCalculator() {
       utcOffset,
       lng: coords.lng,
       clock: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
+      timezone,
     });
 
     // A brief, deliberate pause — the calculation itself is instant, but a
@@ -361,6 +364,15 @@ export function BaziCalculator() {
                 )}
               </div>
               <BaziChart result={baziResult} name={name.trim() || "Your"} />
+              {chartMeta && (
+                <div className="mt-8">
+                  <TransitPillars
+                    natal={baziResult}
+                    timezone={chartMeta.timezone}
+                    lng={chartMeta.lng}
+                  />
+                </div>
+              )}
             </section>
           )}
 

@@ -5,8 +5,14 @@ import {
   BaziResult,
   FiveElementsBalance,
   SolarTimeMoment,
+  TransitResult,
 } from "./bazi-types";
-import { computeBaziStars, computeVoidBranches } from "./bazi-stars";
+import {
+  computeBaziStars,
+  computeVoidBranches,
+  StarHit,
+  PillarKey,
+} from "./bazi-stars";
 
 /**
  * This wraps `lunar-javascript` (MIT licensed, https://github.com/6tail/lunar-javascript),
@@ -85,21 +91,70 @@ const QI_PHASE_EN: Record<string, string> = {
   "养": "Nurturing",
 };
 
+const ELEMENT_INDEX: Record<string, number> = {
+  Wood: 0, Fire: 1, Earth: 2, Metal: 3, Water: 4,
+};
+
 /**
- * Calls a method on the lunar-javascript object only if it exists, and
- * never lets it throw — the deeper chart layers (Qi phases, hidden-stem
- * Ten Gods) come from parts of the EightChar API we haven't been able to
- * execute in this environment. If a method name shifted between library
- * versions, the chart simply renders without that one layer instead of
- * crashing the whole calculator.
+ * Ten God of any stem relative to a given Day Master — pure five-element
+ * cycle + polarity, no library dependency, so natal pillars and transit
+ * (current year/month/day/hour) pillars are guaranteed to use the exact
+ * same logic. Verified against the reference calculator's rendering:
+ * for Day Master 辛 it labels 丙 = Direct Officer (Правильная власть),
+ * 庚 = Rob Wealth (Уменьшение богатства), 癸 = Eating God (Дух
+ * наслаждения) — all reproduced by this function.
  */
-function safeCall(obj: any, method: string): any {
-  try {
-    return typeof obj?.[method] === "function" ? obj[method]() : undefined;
-  } catch {
-    return undefined;
-  }
+export function tenGodOf(dayMaster: string, stem: string): string {
+  const dmEl = ELEMENT_INDEX[STEM_ELEMENT[dayMaster] ?? ""];
+  const stEl = ELEMENT_INDEX[STEM_ELEMENT[stem] ?? ""];
+  if (dmEl === undefined || stEl === undefined) return "";
+  const samePolarity = YANG_STEMS.has(dayMaster) === YANG_STEMS.has(stem);
+  const rel = (stEl - dmEl + 5) % 5;
+  const chinese =
+    rel === 0
+      ? samePolarity ? "比肩" : "劫财"
+      : rel === 1
+      ? samePolarity ? "食神" : "伤官"
+      : rel === 2
+      ? samePolarity ? "偏财" : "正财"
+      : rel === 3
+      ? samePolarity ? "七杀" : "正官"
+      : samePolarity ? "偏印" : "正印";
+  return translateTenGod(chinese);
 }
+
+const QI_PHASES_CN = [
+  "长生", "沐浴", "冠带", "临官", "帝旺", "衰",
+  "病", "死", "墓", "绝", "胎", "养",
+];
+const BRANCH_ORDER = [
+  "子", "丑", "寅", "卯", "辰", "巳",
+  "午", "未", "申", "酉", "戌", "亥",
+];
+/** 长生 (Birth) anchor branch of each stem; yang stems run forward, yin backward */
+const CHANGSHENG_START: Record<string, string> = {
+  "甲": "亥", "丙": "寅", "戊": "寅", "庚": "巳", "壬": "申",
+  "乙": "午", "丁": "酉", "己": "酉", "辛": "子", "癸": "卯",
+};
+
+/**
+ * Qi phase (12-stage cycle) of the Day Master at a given branch.
+ * Classical rule: yang Day Masters walk the cycle forward from their
+ * Birth branch, yin ones walk backward. Verified against the reference:
+ * Day Master 辛 → 午 = Illness (Болезнь), 寅 = Conception (Зачатие),
+ * both exactly as feng-shui.ua renders them.
+ */
+export function qiPhaseOf(dayMaster: string, branch: string): string {
+  const start = BRANCH_ORDER.indexOf(CHANGSHENG_START[dayMaster] ?? "");
+  const target = BRANCH_ORDER.indexOf(branch);
+  if (start < 0 || target < 0) return "";
+  const forward = YANG_STEMS.has(dayMaster);
+  const steps = forward
+    ? (target - start + 12) % 12
+    : (start - target + 12) % 12;
+  return QI_PHASE_EN[QI_PHASES_CN[steps]];
+}
+
 
 /**
  * Converts a birth moment from civil clock time to MEAN LOCAL SOLAR TIME —
@@ -170,33 +225,31 @@ export function calculateBazi(input: BaziInput): BaziResult {
   const lunar = solar.getLunar();
   const eightChar = lunar.getEightChar();
 
+  // The Day Master comes first — every Ten God, hidden-stem god, and Qi
+  // phase below is computed relative to it with the pure table functions
+  // above (not library calls), so the natal pillars and the transit
+  // pillars in calculateTransitPillars can never drift apart.
+  const dayMasterStem = eightChar.getDayGan();
+
   function buildPillar(
     label: string,
     stem: string,
     branch: string,
-    hiddenStems: string[],
-    tenGodStem: string,
-    hiddenTenGodsRaw: unknown,
-    qiPhaseRaw: unknown
+    hiddenStems: string[]
   ): BaziPillar {
-    const hiddenTenGods = Array.isArray(hiddenTenGodsRaw)
-      ? hiddenTenGodsRaw.map((g) => translateTenGod(String(g)))
-      : [];
     return {
       label,
       stem,
       branch,
       hiddenStems,
-      hiddenTenGods,
-      tenGodStem: translateTenGod(tenGodStem),
+      hiddenTenGods: hiddenStems.map((h) => tenGodOf(dayMasterStem, h)),
+      tenGodStem:
+        label === "Day" ? "Day Master" : tenGodOf(dayMasterStem, stem),
       element: elementOfStem(stem),
       stemYinYang: YANG_STEMS.has(stem) ? "Yang" : "Yin",
       branchElement: BRANCH_ELEMENT[branch] ?? "",
       branchAnimal: BRANCH_ANIMAL[branch] ?? "",
-      qiPhase:
-        typeof qiPhaseRaw === "string" && qiPhaseRaw
-          ? QI_PHASE_EN[qiPhaseRaw] ?? qiPhaseRaw
-          : undefined,
+      qiPhase: qiPhaseOf(dayMasterStem, branch) || undefined,
     };
   }
 
@@ -204,40 +257,26 @@ export function calculateBazi(input: BaziInput): BaziResult {
     "Year",
     eightChar.getYearGan(),
     eightChar.getYearZhi(),
-    eightChar.getYearHideGan(),
-    eightChar.getYearShiShenGan(),
-    safeCall(eightChar, "getYearShiShenZhi"),
-    safeCall(eightChar, "getYearDiShi")
+    eightChar.getYearHideGan()
   );
   const monthPillar = buildPillar(
     "Month",
     eightChar.getMonthGan(),
     eightChar.getMonthZhi(),
-    eightChar.getMonthHideGan(),
-    eightChar.getMonthShiShenGan(),
-    safeCall(eightChar, "getMonthShiShenZhi"),
-    safeCall(eightChar, "getMonthDiShi")
+    eightChar.getMonthHideGan()
   );
   const dayPillar = buildPillar(
     "Day",
     eightChar.getDayGan(),
     eightChar.getDayZhi(),
-    eightChar.getDayHideGan(),
-    "Day Master", // the day stem IS the Day Master — no ten-god relationship to itself
-    safeCall(eightChar, "getDayShiShenZhi"),
-    safeCall(eightChar, "getDayDiShi")
+    eightChar.getDayHideGan()
   );
   const hourPillar = buildPillar(
     "Hour",
     eightChar.getTimeGan(),
     eightChar.getTimeZhi(),
-    eightChar.getTimeHideGan(),
-    eightChar.getTimeShiShenGan(),
-    safeCall(eightChar, "getTimeShiShenZhi"),
-    safeCall(eightChar, "getTimeDiShi")
+    eightChar.getTimeHideGan()
   );
-
-  const dayMasterStem = eightChar.getDayGan();
 
   // Five element balance: count element occurrences across all four stems
   // plus the stems hidden within each branch (a simplified, commonly used
@@ -320,4 +359,114 @@ export function calculateBazi(input: BaziInput): BaziResult {
     voidBranches,
     solarTime: solarMoment,
   };
+}
+
+/**
+ * The pillars of an arbitrary moment — "current energies": the selected
+ * year / month / day / hour rendered exactly like the natal pillars, but
+ * with every Ten God, hidden-stem god, Qi phase, and star read RELATIVE
+ * TO THE NATAL CHART (its Day Master and its star anchors), which is how
+ * classical BaZi reads transits and how the reference calculator's
+ * year/month columns work. Uses the same mean-solar-time conversion and
+ * the same lunar-javascript boundary logic (立春 for the year, 节气 for
+ * the month) as the natal calculation.
+ */
+export function calculateTransitPillars(input: {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  /** UTC offset of the chart's location at the SELECTED moment (fractional hours) */
+  utcOffset: number;
+  lng?: number;
+  natal: BaziResult;
+}): TransitResult {
+  const { year, month, day, hour, minute, utcOffset, lng, natal } = input;
+  const dm = natal.dayMaster.stem;
+
+  const solarMoment: SolarTimeMoment | undefined =
+    typeof lng === "number" && Number.isFinite(lng)
+      ? meanSolarMoment(year, month, day, hour, minute, utcOffset, lng)
+      : undefined;
+
+  const t = solarMoment ?? { year, month, day, hour, minute };
+  const solar = Solar.fromYmdHms(t.year, t.month, t.day, t.hour, t.minute, 0);
+  const eightChar = solar.getLunar().getEightChar();
+
+  function buildTransitPillar(
+    label: string,
+    stem: string,
+    branch: string,
+    hiddenStems: string[]
+  ): BaziPillar {
+    return {
+      label,
+      stem,
+      branch,
+      hiddenStems,
+      hiddenTenGods: hiddenStems.map((h) => tenGodOf(dm, h)),
+      // Unlike the natal day pillar, the transit day stem is NOT the
+      // person — it gets a real Ten God relative to the natal Day Master.
+      tenGodStem: tenGodOf(dm, stem),
+      element: elementOfStem(stem),
+      stemYinYang: YANG_STEMS.has(stem) ? "Yang" : "Yin",
+      branchElement: BRANCH_ELEMENT[branch] ?? "",
+      branchAnimal: BRANCH_ANIMAL[branch] ?? "",
+      qiPhase: qiPhaseOf(dm, branch) || undefined,
+    };
+  }
+
+  const pillars = {
+    year: buildTransitPillar(
+      "Year",
+      eightChar.getYearGan(),
+      eightChar.getYearZhi(),
+      eightChar.getYearHideGan()
+    ),
+    month: buildTransitPillar(
+      "Month",
+      eightChar.getMonthGan(),
+      eightChar.getMonthZhi(),
+      eightChar.getMonthHideGan()
+    ),
+    day: buildTransitPillar(
+      "Day",
+      eightChar.getDayGan(),
+      eightChar.getDayZhi(),
+      eightChar.getDayHideGan()
+    ),
+    hour: buildTransitPillar(
+      "Hour",
+      eightChar.getTimeGan(),
+      eightChar.getTimeZhi(),
+      eightChar.getTimeHideGan()
+    ),
+  };
+
+  // The natal chart's star targets don't change — a transit pillar simply
+  // "arrives" at them: if the current year's branch is one of the natal
+  // Nobleman branches, that Nobleman is active this year. This mirrors the
+  // reference calculator, which marks e.g. Благородный(д) in the selected
+  // year's column using the NATAL (д)/(г) anchors.
+  const hits: StarHit[] = [];
+  const keys: PillarKey[] = ["hour", "day", "month", "year"];
+  for (const key of keys) {
+    const branch = pillars[key].branch;
+    for (const s of natal.stars.summary) {
+      for (const target of s.targets) {
+        if (target.branches.includes(branch)) {
+          hits.push({
+            pillar: key,
+            name: s.name,
+            chinese: s.chinese,
+            category: s.category,
+            anchor: target.anchor,
+          });
+        }
+      }
+    }
+  }
+
+  return { pillars, hits, solarTime: solarMoment };
 }

@@ -59,7 +59,7 @@ function StarChip({ hit }: { hit: StarHit }) {
   );
 }
 
-function PillarColumn({
+export function PillarColumn({
   pillar,
   pillarKey,
   hits,
