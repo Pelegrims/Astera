@@ -20,7 +20,7 @@
 
 export type StarCategory = "deity" | "spirit";
 export type StarAnchor = "day" | "year" | "month";
-export type PillarKey = "hour" | "day" | "month" | "year";
+export type PillarKey = "hour" | "day" | "month" | "year" | "luck";
 
 export interface StarHit {
   pillar: PillarKey;

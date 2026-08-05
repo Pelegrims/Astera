@@ -7,6 +7,13 @@ export interface TransitResult {
     day: BaziPillar;
     hour: BaziPillar;
   };
+  /** The 10-year luck pillar active at the selected moment (null before the first cycle) */
+  luck: {
+    pillar: BaziPillar;
+    startAge: number;
+    startYear: number;
+    endYear: number;
+  } | null;
   /** Natal stars activated by the transit branches */
   hits: StarHit[];
   solarTime?: SolarTimeMoment;

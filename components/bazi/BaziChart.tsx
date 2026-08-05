@@ -2,7 +2,13 @@
 
 import { BaziResult, BaziPillar } from "@/lib/bazi-types";
 import { StarHit, PillarKey } from "@/lib/bazi-stars";
-import { BRANCH_ANIMAL, STEM_ELEMENT } from "@/lib/bazi";
+import {
+  BRANCH_ANIMAL,
+  BRANCH_ELEMENT,
+  STEM_ELEMENT,
+  yearGanZhi,
+  qiPhaseOf,
+} from "@/lib/bazi";
 import { Card } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
 import { ElementSpotlight } from "./ElementSpotlight";
@@ -64,12 +70,14 @@ export function PillarColumn({
   pillarKey,
   hits,
   isDayPillar = false,
+  isLuckPillar = false,
   delayMs = 0,
 }: {
   pillar: BaziPillar;
   pillarKey: PillarKey;
   hits: StarHit[];
   isDayPillar?: boolean;
+  isLuckPillar?: boolean;
   delayMs?: number;
 }) {
   const myHits = hits.filter((h) => h.pillar === pillarKey);
@@ -78,6 +86,8 @@ export function PillarColumn({
       className={`animate-card-pop flex flex-col rounded-xl2 border text-center opacity-0 ${
         isDayPillar
           ? "border-burgundy bg-burgundy/5"
+          : isLuckPillar
+          ? "border-gold bg-gold/5"
           : "border-line bg-bg-surface/60"
       }`}
       style={{ animationDelay: `${delayMs}ms` }}
@@ -184,15 +194,15 @@ export function BaziChart({
   showLuckPillars = true,
   showElements = true,
   showCta = true,
-  beforeCta,
+  afterPillars,
 }: {
   result: BaziResult;
   name: string;
   showLuckPillars?: boolean;
   showElements?: boolean;
   showCta?: boolean;
-  /** Rendered between the luck pillars and the CTA (used for transit pillars) */
-  beforeCta?: React.ReactNode;
+  /** Rendered right after the natal pillar grid (used for transit pillars) */
+  afterPillars?: React.ReactNode;
 }) {
   const { pillars, dayMaster, fiveElements, luckPillars, stars, voidBranches } =
     result;
@@ -258,6 +268,8 @@ export function BaziChart({
           are deities, grey are spirits &amp; demons
         </p>
       </div>
+
+      {afterPillars}
 
       {/* ── Symbolic stars summary (like the reference side panel) ── */}
       <Card className="p-6">
@@ -331,39 +343,117 @@ export function BaziChart({
       {showLuckPillars && luckPillars.length > 0 && (
         <Card className="p-6">
           <h2 className="font-display text-lg text-aubergine">
-            Luck Pillars — 10-Year Cycles
+            Luck Pillars — 10-Year Cycles &amp; Year Ruler
           </h2>
           <p className="mt-1 text-xs text-ink-muted">
-            The decade-long chapters of the chart, each colored by its
-            governing element.
+            The decade-long chapters of the chart — and under each, its
+            years, with the Qi phase and activated stars read against the
+            Day Master, just like the natal pillars.
           </p>
           <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
-            {luckPillars.map((p, i) => (
-              <div
-                key={i}
-                className="min-w-[104px] animate-card-pop rounded-xl2 border border-line bg-bg-surface/60 p-3 text-center opacity-0"
-                style={{ animationDelay: `${600 + i * 80}ms` }}
-              >
-                <p className="font-mono text-[10px] text-ink-faint">
-                  Age {p.startAge}
-                </p>
-                <p className="mt-1 font-display text-2xl leading-none">
-                  <span className={elementClass(p.stemElement)}>{p.stem}</span>
-                  <span className="text-aubergine">{p.branch}</span>
-                </p>
-                <p className="mt-1.5 text-[10px] text-ink-muted">
-                  {p.branchAnimal}
-                </p>
-                <p className="mt-0.5 text-[11px] text-ink-faint">
-                  from {p.startYear}
-                </p>
-              </div>
-            ))}
+            {luckPillars.map((p, i) => {
+              const nextStart = luckPillars[i + 1]?.startYear;
+              const count = Math.min(
+                10,
+                Math.max(1, (nextStart ?? p.startYear + 10) - p.startYear)
+              );
+              const years = Array.from({ length: count }, (_, k) => {
+                const y = p.startYear + k;
+                const gz = yearGanZhi(y);
+                const starHits: StarHit[] = [];
+                for (const st of result.stars.summary) {
+                  for (const t of st.targets) {
+                    if (t.branches.includes(gz.branch)) {
+                      starHits.push({
+                        pillar: "luck",
+                        name: st.name,
+                        chinese: st.chinese,
+                        category: st.category,
+                        anchor: t.anchor,
+                      });
+                    }
+                  }
+                }
+                return {
+                  y,
+                  ...gz,
+                  qi: qiPhaseOf(result.dayMaster.stem, gz.branch),
+                  starHits,
+                };
+              });
+              const nowYear = new Date().getFullYear();
+              return (
+                <div
+                  key={i}
+                  className="min-w-[128px] animate-card-pop rounded-xl2 border border-line bg-bg-surface/60 p-3 opacity-0"
+                  style={{ animationDelay: `${600 + i * 80}ms` }}
+                >
+                  <div className="text-center">
+                    <p className="font-mono text-[10px] text-ink-faint">
+                      Age {p.startAge}
+                    </p>
+                    <p className="mt-1 font-display text-2xl leading-none">
+                      <span className={elementClass(p.stemElement)}>
+                        {p.stem}
+                      </span>
+                      <span className="text-aubergine">{p.branch}</span>
+                    </p>
+                    <p className="mt-1.5 text-[10px] text-ink-muted">
+                      {p.branchAnimal}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-ink-faint">
+                      from {p.startYear}
+                    </p>
+                  </div>
+                  <div className="mt-3 space-y-1 border-t border-line/60 pt-2">
+                    {years.map((yr) => (
+                      <div
+                        key={yr.y}
+                        className={`rounded-md px-1 py-0.5 ${
+                          yr.y === nowYear
+                            ? "border border-gold/60 bg-gold/10"
+                            : ""
+                        }`}
+                      >
+                        <p className="flex items-baseline justify-between text-[10px]">
+                          <span className="font-mono text-ink-faint">
+                            {yr.y}
+                          </span>
+                          <span className="font-display text-sm leading-none">
+                            <span className={elementClass(STEM_ELEMENT[yr.stem] ?? "")}>
+                              {yr.stem}
+                            </span>
+                            <span
+                              className={elementClass(
+                                BRANCH_ELEMENT[yr.branch] ?? ""
+                              )}
+                            >
+                              {yr.branch}
+                            </span>
+                          </span>
+                          <span className="text-ink-muted">{yr.qi}</span>
+                        </p>
+                        {yr.starHits.length > 0 && (
+                          <p className="mt-0.5 flex flex-wrap justify-end gap-0.5">
+                            {yr.starHits.map((h, k) => (
+                              <StarChip key={`${h.name}-${h.anchor}-${k}`} hit={h} />
+                            ))}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
+          <p className="mt-2 text-[10px] text-ink-faint">
+            Year labels follow the Chinese solar year, which turns at 立春
+            (~Feb 4) — so January of a listed year still belongs to the
+            previous year&apos;s pillar. The current year is framed in gold.
+          </p>
         </Card>
       )}
-
-      {beforeCta}
 
       {showCta && (
         <div className="rounded-xl2 border border-line bg-bg-surface/50 p-8 text-center">

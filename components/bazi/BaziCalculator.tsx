@@ -367,7 +367,7 @@ export function BaziCalculator() {
               <BaziChart
                 result={baziResult}
                 name={name.trim() || "Your"}
-                beforeCta={
+                afterPillars={
                   chartMeta ? (
                     <TransitPillars
                       natal={baziResult}

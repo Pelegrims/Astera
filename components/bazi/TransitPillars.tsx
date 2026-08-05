@@ -193,12 +193,51 @@ export function TransitPillars({
 
       {transit && (
         <>
-          <div className="mt-6 grid grid-cols-4 gap-1.5 sm:gap-3">
+          <p className="mt-5 text-center font-display text-sm text-aubergine">
+            {transit.result.pillars.year.element}{" "}
+            {transit.result.pillars.year.branchAnimal} year ·{" "}
+            {transit.result.pillars.month.element}{" "}
+            {transit.result.pillars.month.branchAnimal} month ·{" "}
+            {transit.result.pillars.day.element}{" "}
+            {transit.result.pillars.day.branchAnimal} day ·{" "}
+            {transit.result.pillars.hour.element}{" "}
+            {transit.result.pillars.hour.branchAnimal} hour
+          </p>
+          {transit.result.luck ? (
+            <p className="mt-1 text-center text-[11px] text-ink-muted">
+              Active luck cycle:{" "}
+              <span className="font-display">
+                {transit.result.luck.pillar.stem}
+                {transit.result.luck.pillar.branch}
+              </span>{" "}
+              — ages {transit.result.luck.startAge}–
+              {transit.result.luck.startAge + 9} (
+              {transit.result.luck.startYear}–{transit.result.luck.endYear})
+            </p>
+          ) : (
+            <p className="mt-1 text-center text-[11px] text-ink-faint">
+              Selected date is before the first 10-year luck cycle begins.
+            </p>
+          )}
+          <div
+            className={`mt-6 grid gap-1.5 sm:gap-3 ${
+              transit.result.luck ? "grid-cols-5" : "grid-cols-4"
+            }`}
+          >
+            {transit.result.luck && (
+              <PillarColumn
+                pillar={transit.result.luck.pillar}
+                pillarKey="luck"
+                hits={transit.result.hits}
+                isLuckPillar
+                delayMs={0}
+              />
+            )}
             <PillarColumn
               pillar={transit.result.pillars.hour}
               pillarKey="hour"
               hits={transit.result.hits}
-              delayMs={0}
+              delayMs={50}
             />
             <PillarColumn
               pillar={transit.result.pillars.day}

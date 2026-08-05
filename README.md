@@ -191,10 +191,14 @@ formula. The free Thank-You preview shows the full pillar chart but keeps
 the 10-year luck cycles out — those stay part of the paid Extended
 Reading pitch.
 
-**Transit pillars ("Current Energies")** live below the natal chart on
-`/bazi`: the pillars of any selected moment — defaulting to right now in
+**Transit pillars ("Current Energies")** sit immediately after the natal
+pillar grid on `/bazi`: the pillars of any selected moment — defaulting to right now in
 the birth city's clock — with year/month/day/hour dropdowns and a "Back
-to now" reset. Everything in them (Ten Gods, hidden-stem gods, Qi
+to now" reset, plus the **active 10-year luck pillar** for the selected
+date as a gold-framed fifth column (with its own gods, Qi phase, hidden
+stems, and activated stars; `activeLuckPillar()` picks it by start year,
+treating the whole boundary year as the new cycle) and a plain-language
+line like "Fire Horse year · Wood Goat month · Metal Pig day". Everything in them (Ten Gods, hidden-stem gods, Qi
 phases, activated stars) is read **relative to the natal Day Master and
 natal star anchors**, which is how classical BaZi reads transits and how
 the reference's selectable year/month columns behave. To keep natal and

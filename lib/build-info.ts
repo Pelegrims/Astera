@@ -5,4 +5,4 @@
  * uploading files through the GitHub web UI, where partial uploads have
  * silently shipped stale pages more than once.
  */
-export const BUILD_TAG = "2026-08-05 c · transits + houses + solar time";
+export const BUILD_TAG = "2026-08-05 e · year ruler under luck cycles";

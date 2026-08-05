@@ -61,9 +61,51 @@ function elementOfStem(stem: string): string {
   return STEM_ELEMENT[stem] ?? stem;
 }
 
+/**
+ * Classical hidden stems (藏干) of each branch, main qi first. Needed for
+ * the luck-pillar column in transits — its branch is not one of the four
+ * the transit EightChar exposes, so the lookup must be ours. Order may
+ * differ cosmetically from lunar-javascript's own listing in rare
+ * branches; the SET of stems is canonical.
+ */
+const HIDDEN_STEMS: Record<string, string[]> = {
+  "子": ["癸"],
+  "丑": ["己", "癸", "辛"],
+  "寅": ["甲", "丙", "戊"],
+  "卯": ["乙"],
+  "辰": ["戊", "乙", "癸"],
+  "巳": ["丙", "庚", "戊"],
+  "午": ["丁", "己"],
+  "未": ["己", "丁", "乙"],
+  "申": ["庚", "壬", "戊"],
+  "酉": ["辛"],
+  "戌": ["戊", "辛", "丁"],
+  "亥": ["壬", "甲"],
+};
+
+/**
+ * The 10-year luck pillar active in a given (civil) year, or null if the
+ * year falls before the first cycle starts. Boundary note: real DaYun
+ * switches on an exact solar-term-derived date inside the start year; at
+ * year granularity we treat the whole start year as the new cycle, which
+ * is the common calculator convention.
+ */
+export function activeLuckPillar<T extends { startYear: number }>(
+  luckPillars: T[],
+  year: number
+): T | null {
+  let active: T | null = null;
+  for (const p of luckPillars) {
+    if (p.startYear <= year && (!active || p.startYear > active.startYear)) {
+      active = p;
+    }
+  }
+  return active;
+}
+
 const YANG_STEMS = new Set(["甲", "丙", "戊", "庚", "壬"]);
 
-const BRANCH_ELEMENT: Record<string, string> = {
+export const BRANCH_ELEMENT: Record<string, string> = {
   "子": "Water", "丑": "Earth", "寅": "Wood", "卯": "Wood",
   "辰": "Earth", "巳": "Fire", "午": "Fire", "未": "Earth",
   "申": "Metal", "酉": "Metal", "戌": "Earth", "亥": "Water",
@@ -127,10 +169,23 @@ const QI_PHASES_CN = [
   "长生", "沐浴", "冠带", "临官", "帝旺", "衰",
   "病", "死", "墓", "绝", "胎", "养",
 ];
+const STEM_ORDER = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
 const BRANCH_ORDER = [
   "子", "丑", "寅", "卯", "辰", "巳",
   "午", "未", "申", "酉", "戌", "亥",
 ];
+
+/**
+ * Ganzhi label of a (Chinese solar) year — pure 60-cycle math anchored at
+ * 1984 = 甲子. Used for the year ruler under the luck pillars: the whole
+ * civil year is labeled with its Chinese year, same convention as the
+ * reference's year table ("2027 丁未"). Strictly, the year flips at 立春
+ * (~Feb 4), so January belongs to the previous pillar — noted in the UI.
+ */
+export function yearGanZhi(year: number): { stem: string; branch: string } {
+  const i = (((year - 1984) % 60) + 60) % 60;
+  return { stem: STEM_ORDER[i % 10], branch: BRANCH_ORDER[i % 12] };
+}
 /** 长生 (Birth) anchor branch of each stem; yang stems run forward, yin backward */
 const CHANGSHENG_START: Record<string, string> = {
   "甲": "亥", "丙": "寅", "戊": "寅", "庚": "巳", "壬": "申",
@@ -444,15 +499,42 @@ export function calculateTransitPillars(input: {
     ),
   };
 
+  // The 10-year luck pillar (大运) active at the selected moment — the
+  // decade context every classical reading pairs with the year/month/day.
+  const activeLuck = activeLuckPillar(natal.luckPillars ?? [], year);
+  const nextLuck = activeLuck
+    ? (natal.luckPillars ?? []).find(
+        (p) => p.startYear > activeLuck.startYear
+      )
+    : null;
+  const luck = activeLuck
+    ? {
+        pillar: buildTransitPillar(
+          "Luck",
+          activeLuck.stem,
+          activeLuck.branch,
+          HIDDEN_STEMS[activeLuck.branch] ?? []
+        ),
+        startAge: activeLuck.startAge,
+        startYear: activeLuck.startYear,
+        endYear: nextLuck ? nextLuck.startYear - 1 : activeLuck.startYear + 9,
+      }
+    : null;
+
   // The natal chart's star targets don't change — a transit pillar simply
   // "arrives" at them: if the current year's branch is one of the natal
   // Nobleman branches, that Nobleman is active this year. This mirrors the
   // reference calculator, which marks e.g. Благородный(д) in the selected
   // year's column using the NATAL (д)/(г) anchors.
   const hits: StarHit[] = [];
-  const keys: PillarKey[] = ["hour", "day", "month", "year"];
-  for (const key of keys) {
-    const branch = pillars[key].branch;
+  const scan: { key: PillarKey; branch: string }[] = [
+    { key: "hour", branch: pillars.hour.branch },
+    { key: "day", branch: pillars.day.branch },
+    { key: "month", branch: pillars.month.branch },
+    { key: "year", branch: pillars.year.branch },
+  ];
+  if (luck) scan.push({ key: "luck", branch: luck.pillar.branch });
+  for (const { key, branch } of scan) {
     for (const s of natal.stars.summary) {
       for (const target of s.targets) {
         if (target.branches.includes(branch)) {
@@ -468,5 +550,5 @@ export function calculateTransitPillars(input: {
     }
   }
 
-  return { pillars, hits, solarTime: solarMoment };
+  return { pillars, hits, luck, solarTime: solarMoment };
 }
