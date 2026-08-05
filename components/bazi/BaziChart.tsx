@@ -184,12 +184,15 @@ export function BaziChart({
   showLuckPillars = true,
   showElements = true,
   showCta = true,
+  beforeCta,
 }: {
   result: BaziResult;
   name: string;
   showLuckPillars?: boolean;
   showElements?: boolean;
   showCta?: boolean;
+  /** Rendered between the luck pillars and the CTA (used for transit pillars) */
+  beforeCta?: React.ReactNode;
 }) {
   const { pillars, dayMaster, fiveElements, luckPillars, stars, voidBranches } =
     result;
@@ -359,6 +362,8 @@ export function BaziChart({
           </div>
         </Card>
       )}
+
+      {beforeCta}
 
       {showCta && (
         <div className="rounded-xl2 border border-line bg-bg-surface/50 p-8 text-center">

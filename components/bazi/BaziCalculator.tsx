@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/Card";
 import { CityAutocomplete } from "@/components/ui/CityAutocomplete";
 import { BaziChart } from "@/components/bazi/BaziChart";
 import { TransitPillars } from "@/components/bazi/TransitPillars";
+import { BUILD_TAG } from "@/lib/build-info";
 import { NatalChartDisplay } from "@/components/astrology/NatalChartDisplay";
 import { MatrixDisplay } from "@/components/matrix/MatrixDisplay";
 
@@ -363,16 +364,19 @@ export function BaziCalculator() {
                   </p>
                 )}
               </div>
-              <BaziChart result={baziResult} name={name.trim() || "Your"} />
-              {chartMeta && (
-                <div className="mt-8">
-                  <TransitPillars
-                    natal={baziResult}
-                    timezone={chartMeta.timezone}
-                    lng={chartMeta.lng}
-                  />
-                </div>
-              )}
+              <BaziChart
+                result={baziResult}
+                name={name.trim() || "Your"}
+                beforeCta={
+                  chartMeta ? (
+                    <TransitPillars
+                      natal={baziResult}
+                      timezone={chartMeta.timezone}
+                      lng={chartMeta.lng}
+                    />
+                  ) : null
+                }
+              />
             </section>
           )}
 
@@ -391,6 +395,9 @@ export function BaziCalculator() {
           )}
         </div>
       )}
+      <p className="mt-12 text-center font-mono text-[9px] uppercase tracking-[0.15em] text-ink-faint/60">
+        build {BUILD_TAG}
+      </p>
     </div>
   );
 }
