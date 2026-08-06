@@ -9,6 +9,7 @@ import { BaziChart } from "@/components/bazi/BaziChart";
 import { NatalChartDisplay } from "@/components/astrology/NatalChartDisplay";
 import { MatrixDisplay } from "@/components/matrix/MatrixDisplay";
 import { PaddleCheckoutButton } from "@/components/ui/PaddleCheckoutButton";
+import { TransitPillars } from "@/components/bazi/TransitPillars";
 
 export function BaziFreePreview({
   firstName,
@@ -18,6 +19,7 @@ export function BaziFreePreview({
   utcOffset,
   lat,
   lng,
+  timezone,
 }: {
   firstName: string;
   birthDate: string; // "YYYY-MM-DD"
@@ -26,6 +28,8 @@ export function BaziFreePreview({
   utcOffset: number;
   lat?: number;
   lng?: number;
+  /** IANA zone of the birth city — enables the Current Energies block */
+  timezone?: string;
 }) {
   const parsed = useMemo(() => {
     const [year, month, day] = birthDate.split("-").map(Number);
@@ -113,6 +117,15 @@ export function BaziFreePreview({
               showLuckPillars={false}
               showElements={false}
               showCta={false}
+              afterPillars={
+                timezone && typeof lng === "number" ? (
+                  <TransitPillars
+                    natal={baziResult}
+                    timezone={timezone}
+                    lng={lng}
+                  />
+                ) : undefined
+              }
             />
           </div>
           {baziResult.solarTime && (

@@ -5,4 +5,4 @@
  * uploading files through the GitHub web UI, where partial uploads have
  * silently shipped stale pages more than once.
  */
-export const BUILD_TAG = "2026-08-05 f · period picker (year + bazi month)";
+export const BUILD_TAG = "2026-08-05 g · current energies in quiz preview";

@@ -14,6 +14,10 @@ export async function submitQuiz(formData: FormData) {
   const birthLocation = String(formData.get("birthLocation") ?? "").trim();
   const lat = String(formData.get("lat") ?? "").trim();
   const lng = String(formData.get("lng") ?? "").trim();
+  // IANA zone of the birth city — only forwarded to the thank-you preview
+  // (for the live Current Energies block), deliberately not stored in the
+  // DB so no schema migration is required.
+  const timezone = String(formData.get("timezone") ?? "").trim();
   const gender = String(formData.get("gender") ?? "female") as "male" | "female";
   const utcOffset = Number(formData.get("utcOffset") ?? -5);
   const focus = String(formData.get("focus") ?? "") as FocusArea;
@@ -49,6 +53,7 @@ export async function submitQuiz(formData: FormData) {
     utcOffset: String(request.utcOffset),
     lat,
     lng,
+    timezone,
   });
   redirect(`/thank-you?${params.toString()}`);
 }

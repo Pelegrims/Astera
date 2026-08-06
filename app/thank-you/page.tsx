@@ -15,6 +15,7 @@ export default function ThankYouPage({
     utcOffset?: string;
     lat?: string;
     lng?: string;
+    timezone?: string;
   };
 }) {
   // Support both the new params and the old ?name= link, so anything
@@ -58,6 +59,7 @@ export default function ThankYouPage({
             utcOffset={Number(searchParams.utcOffset ?? -5)}
             lat={searchParams.lat ? Number(searchParams.lat) : undefined}
             lng={searchParams.lng ? Number(searchParams.lng) : undefined}
+            timezone={searchParams.timezone || undefined}
           />
         </Container>
       )}

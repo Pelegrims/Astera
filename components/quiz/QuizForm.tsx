@@ -349,6 +349,11 @@ export function QuizForm() {
             />
             <input type="hidden" name="lat" value={values.lat ?? ""} />
             <input type="hidden" name="lng" value={values.lng ?? ""} />
+            <input
+              type="hidden"
+              name="timezone"
+              value={values.timezone ?? ""}
+            />
             <input type="hidden" name="gender" value={values.gender} />
             <input
               type="hidden"
