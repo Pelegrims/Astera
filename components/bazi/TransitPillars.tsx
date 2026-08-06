@@ -55,6 +55,50 @@ function approxMonthBranch(month: number, day: number): string {
   return current;
 }
 
+/** Start (month, day) of each BaZi month's approximate civil span */
+const BRANCH_STARTS: Record<string, [number, number]> = {
+  "寅": [2, 4], "卯": [3, 6], "辰": [4, 5], "巳": [5, 6],
+  "午": [6, 6], "未": [7, 7], "申": [8, 7], "酉": [9, 8],
+  "戌": [10, 8], "亥": [11, 7], "子": [12, 7], "丑": [1, 6],
+};
+const BRANCH_SEQ = ["寅","卯","辰","巳","午","未","申","酉","戌","亥","子","丑"];
+const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+/**
+ * The civil dates covered by a given BaZi month of a given BaZi year
+ * (the year runs ≈ Feb 4 → Feb 3; 子 spans December, 丑 spans January of
+ * the NEXT civil year). Spans are the same ±1-day approximation the
+ * month dropdown shows; the day PILLAR computed for a chosen date is
+ * exact regardless.
+ */
+function baziMonthCivilDates(
+  year: number,
+  branch: string
+): { y: number; m: number; d: number; iso: string; label: string }[] {
+  const idx = BRANCH_SEQ.indexOf(branch);
+  if (idx < 0) return [];
+  const [sm, sd] = BRANCH_STARTS[branch];
+  const startYear = branch === "丑" ? year + 1 : year;
+  const next = BRANCH_SEQ[(idx + 1) % 12];
+  const [em, ed] = BRANCH_STARTS[next];
+  const endYear = next === "丑" ? year + 1 : branch === "丑" ? year + 1 : year;
+  const startMs = Date.UTC(startYear, sm - 1, sd);
+  const endMs = Date.UTC(next === "寅" ? year + 1 : endYear, em - 1, ed); // exclusive
+  const out: { y: number; m: number; d: number; iso: string; label: string }[] = [];
+  for (let ms = startMs; ms < endMs; ms += 86_400_000) {
+    const dt = new Date(ms);
+    const y = dt.getUTCFullYear();
+    const m = dt.getUTCMonth() + 1;
+    const d = dt.getUTCDate();
+    out.push({
+      y, m, d,
+      iso: `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+      label: `${MONTH_SHORT[m - 1]} ${d}${y !== year ? `, ${y}` : ""}`,
+    });
+  }
+  return out;
+}
+
 function daysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
 }
@@ -88,26 +132,47 @@ export function TransitPillars({
   const maxDay = daysInMonth(year, month);
   const clampedDay = Math.min(day, maxDay);
 
-  // Today's DAY pillar — "день расчёта": always the current day in the
-  // birth city's clock, shown beside the selected year/month period.
-  // Computed through the same solar-time transit pipeline as everything
-  // else, so the 23:00 day boundary is handled identically to the natal
-  // chart.
-  const todayDay = useMemo(() => {
+  // Which civil dates the selected BaZi month covers, and which one the
+  // day column shows. Changing the year or month rebuilds the list, so
+  // the day pillar always follows the selected period. Default: today
+  // when it falls inside the period, otherwise the period's first day.
+  const [pDayIso, setPDayIso] = useState<string>("");
+  const dayOptions = useMemo(
+    () => (pMonthBranch ? baziMonthCivilDates(pYear, pMonthBranch) : []),
+    [pYear, pMonthBranch]
+  );
+  const todayIso = `${now.year}-${String(now.month).padStart(2, "0")}-${String(
+    now.day
+  ).padStart(2, "0")}`;
+  const resolvedDay = useMemo(() => {
+    if (dayOptions.length === 0) {
+      // "Whole year" — the day column shows today, the day of calculation
+      return { y: now.year, m: now.month, d: now.day, iso: todayIso, isToday: true };
+    }
+    const chosen =
+      dayOptions.find((o) => o.iso === pDayIso) ??
+      dayOptions.find((o) => o.iso === todayIso) ??
+      dayOptions[0];
+    return { ...chosen, isToday: chosen.iso === todayIso };
+  }, [dayOptions, pDayIso, todayIso, now.year, now.month, now.day]);
+
+  // The DAY pillar of the resolved date — through the same solar-time
+  // transit pipeline as everything else (computed at noon, so the 23:00
+  // solar day boundary can't flip it).
+  const dayInfo = useMemo(() => {
     try {
-      const n = DateTime.now().setZone(timezone);
       const utcOffset = offsetForDate(
-        timezone, n.year, n.month, n.day, n.hour, n.minute
+        timezone, resolvedDay.y, resolvedDay.m, resolvedDay.d, 12, 0
       );
       const t = calculateTransitPillars({
-        year: n.year, month: n.month, day: n.day,
-        hour: n.hour, minute: n.minute, utcOffset, lng, natal,
+        year: resolvedDay.y, month: resolvedDay.m, day: resolvedDay.d,
+        hour: 12, minute: 0, utcOffset, lng, natal,
       });
       return { pillar: t.pillars.day, hits: t.hits };
     } catch {
       return null;
     }
-  }, [timezone, lng, natal]);
+  }, [timezone, lng, natal, resolvedDay]);
 
   const period = useMemo(() => {
     try {
@@ -223,6 +288,21 @@ export function TransitPillars({
                 <option key={m.branch} value={m.branch}>{m.label}</option>
               ))}
             </select>
+            {dayOptions.length > 0 && (
+              <select
+                aria-label="Day"
+                className={selectClass}
+                value={resolvedDay.iso}
+                onChange={(e) => setPDayIso(e.target.value)}
+              >
+                {dayOptions.map((o) => (
+                  <option key={o.iso} value={o.iso}>
+                    {o.label}
+                    {o.iso === todayIso ? " · today" : ""}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {period && (
@@ -233,23 +313,27 @@ export function TransitPillars({
                 {period.year.branchAnimal} year
                 {period.month &&
                   ` · ${period.month.stem}${period.month.branch} ${period.month.element} ${period.month.branchAnimal} month`}
-                {todayDay &&
-                  ` · ${todayDay.pillar.stem}${todayDay.pillar.branch} ${todayDay.pillar.element} ${todayDay.pillar.branchAnimal} day (today)`}
+                {dayInfo &&
+                  ` · ${dayInfo.pillar.stem}${dayInfo.pillar.branch} ${dayInfo.pillar.element} ${dayInfo.pillar.branchAnimal} day (${
+                    resolvedDay.isToday
+                      ? "today"
+                      : `${MONTH_SHORT[resolvedDay.m - 1]} ${resolvedDay.d}`
+                  })`}
               </p>
               <div
                 className={`mx-auto mt-5 grid max-w-lg gap-1.5 sm:gap-3 ${
-                  todayDay && period.month
+                  dayInfo && period.month
                     ? "grid-cols-3"
-                    : todayDay || period.month
+                    : dayInfo || period.month
                     ? "grid-cols-2"
                     : "grid-cols-1"
                 }`}
               >
-                {todayDay && (
+                {dayInfo && (
                   <PillarColumn
-                    pillar={todayDay.pillar}
+                    pillar={dayInfo.pillar}
                     pillarKey="day"
-                    hits={todayDay.hits}
+                    hits={dayInfo.hits}
                     delayMs={0}
                   />
                 )}

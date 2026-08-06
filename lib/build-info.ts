@@ -5,4 +5,4 @@
  * uploading files through the GitHub web UI, where partial uploads have
  * silently shipped stale pages more than once.
  */
-export const BUILD_TAG = "2026-08-06 h · day-of-calculation in period view";
+export const BUILD_TAG = "2026-08-06 i · selectable day within period";
