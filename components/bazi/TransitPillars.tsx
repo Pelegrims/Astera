@@ -88,6 +88,27 @@ export function TransitPillars({
   const maxDay = daysInMonth(year, month);
   const clampedDay = Math.min(day, maxDay);
 
+  // Today's DAY pillar — "день расчёта": always the current day in the
+  // birth city's clock, shown beside the selected year/month period.
+  // Computed through the same solar-time transit pipeline as everything
+  // else, so the 23:00 day boundary is handled identically to the natal
+  // chart.
+  const todayDay = useMemo(() => {
+    try {
+      const n = DateTime.now().setZone(timezone);
+      const utcOffset = offsetForDate(
+        timezone, n.year, n.month, n.day, n.hour, n.minute
+      );
+      const t = calculateTransitPillars({
+        year: n.year, month: n.month, day: n.day,
+        hour: n.hour, minute: n.minute, utcOffset, lng, natal,
+      });
+      return { pillar: t.pillars.day, hits: t.hits };
+    } catch {
+      return null;
+    }
+  }, [timezone, lng, natal]);
+
   const period = useMemo(() => {
     try {
       return calculatePeriodPillars({
@@ -212,23 +233,23 @@ export function TransitPillars({
                 {period.year.branchAnimal} year
                 {period.month &&
                   ` · ${period.month.stem}${period.month.branch} ${period.month.element} ${period.month.branchAnimal} month`}
+                {todayDay &&
+                  ` · ${todayDay.pillar.stem}${todayDay.pillar.branch} ${todayDay.pillar.element} ${todayDay.pillar.branchAnimal} day (today)`}
               </p>
-              {luckCaption(period.luck)}
               <div
                 className={`mx-auto mt-5 grid max-w-lg gap-1.5 sm:gap-3 ${
-                  period.luck && period.month
+                  todayDay && period.month
                     ? "grid-cols-3"
-                    : period.luck || period.month
+                    : todayDay || period.month
                     ? "grid-cols-2"
                     : "grid-cols-1"
                 }`}
               >
-                {period.luck && (
+                {todayDay && (
                   <PillarColumn
-                    pillar={period.luck.pillar}
-                    pillarKey="luck"
-                    hits={period.hits}
-                    isLuckPillar
+                    pillar={todayDay.pillar}
+                    pillarKey="day"
+                    hits={todayDay.hits}
                     delayMs={0}
                   />
                 )}
