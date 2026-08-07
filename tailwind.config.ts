@@ -83,6 +83,18 @@ const config: Config = {
           "0%": { transform: "translateX(0)" },
           "100%": { transform: "translateX(-33.33%)" },
         },
+        "drift-a": {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "50%": { transform: "translate(16px, -20px) scale(1.05)" },
+        },
+        "drift-b": {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "50%": { transform: "translate(-18px, 14px) scale(0.96)" },
+        },
+        "drift-c": {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "50%": { transform: "translate(12px, 16px) scale(1.04)" },
+        },
         "blob-morph": {
           "0%, 100%": {
             borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%",
@@ -107,6 +119,9 @@ const config: Config = {
         "shimmer": "shimmer 18s ease-in-out infinite",
         "wave-drift": "wave-drift 18s linear infinite",
         "blob-morph": "blob-morph 12s ease-in-out infinite",
+        "drift-a": "drift-a 22s ease-in-out infinite",
+        "drift-b": "drift-b 28s ease-in-out infinite",
+        "drift-c": "drift-c 34s ease-in-out infinite",
       },
       backgroundImage: {
         "aurora": "radial-gradient(60% 50% at 50% 0%, rgba(92,96,159,0.12) 0%, rgba(242,239,234,0) 70%)",

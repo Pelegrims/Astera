@@ -75,6 +75,22 @@ export function BaziFreePreview({
 
   return (
     <div className="mx-auto mt-14 max-w-4xl animate-fade-up text-left">
+      <div className="mb-8 flex flex-col items-center justify-between gap-3 rounded-xl2 border border-gold/40 bg-gold/5 px-5 py-4 sm:flex-row sm:text-left">
+        <div className="text-center sm:text-left">
+          <p className="text-sm font-medium text-ink">
+            You&apos;re viewing the free preview
+          </p>
+          <p className="mt-0.5 text-xs text-ink-muted">
+            The full reading — written for you personally by a professional
+            astrologer — is{" "}
+            <span className="text-ink-faint line-through">$39.99</span>{" "}
+            <span className="font-medium text-burgundy">$29.99</span>
+          </p>
+        </div>
+        <PaddleCheckoutButton className="shrink-0">
+          Get the full reading
+        </PaddleCheckoutButton>
+      </div>
       <div className="text-center">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-ink-faint">
           While you wait — a free preview
