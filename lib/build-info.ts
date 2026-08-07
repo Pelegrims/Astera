@@ -5,4 +5,4 @@
  * uploading files through the GitHub web UI, where partial uploads have
  * silently shipped stale pages more than once.
  */
-export const BUILD_TAG = "2026-08-07 j · drifting orbits + top offer strip";
+export const BUILD_TAG = "2026-08-07 k · orbits drift unconditionally";
